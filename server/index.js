@@ -9,7 +9,7 @@ app.use(cors());
 const server = http.createServer(app);
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '../client/public/index.html');
+    res.sendFile('app/client/public/index.html');
   });
 
 // dreamgame variables
