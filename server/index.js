@@ -7,6 +7,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 app.use(cors());
 const server = http.createServer(app);
+const path = require('path');
 
 app.use(express.static(path.join(__dirname, '/../client/public/')));
 app.get('*', (req, res) => { 
