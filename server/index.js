@@ -8,9 +8,10 @@ const cors = require("cors");
 app.use(cors());
 const server = http.createServer(app);
 
-app.get('*', (req, res) => {
+app.use(express.static(path.join(__dirname, '/../client/public/')));
+app.get('*', (req, res) => { 
     res.sendFile(path.join(__dirname + '/../client/public/index.html'));
-  });
+});
 
 // dreamgame variables
 let redisResult = "default redisResult value";
