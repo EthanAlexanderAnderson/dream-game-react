@@ -50,7 +50,7 @@ function App() {
   };
 
   const listener = (data) => {
-    if (data.redisResult === data.guess) {
+    if (data.redisResult === myGuess) {
       setTextSection("CORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + myGuess);
     } else {
       setTextSection("INCORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + myGuess);
