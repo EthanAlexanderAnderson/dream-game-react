@@ -37,7 +37,13 @@ function NameButtons(props) {
                 <button onClick={() => props.guess("Zach")}>Zach</button>
             </div>
         );
-    } 
+    }  else if (props.status === "guessed") {
+        return(
+            <div>
+                <p>Waiting for others to guess...</p>
+            </div>
+        );
+    }
     else {
         return(
             <div id="ControlButtons">

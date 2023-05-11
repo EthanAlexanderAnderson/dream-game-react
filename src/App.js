@@ -36,6 +36,7 @@ function App() {
     socket.emit("guess", myGuess);
     console.log("guesser: " + name);
     console.log("my guess: " + myGuess);
+    setStatus("guessed");
   }
 
   // send message to socket
