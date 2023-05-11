@@ -1,7 +1,4 @@
 import io from 'socket.io-client'
-//import Buffer from 'buffer';
-//import Crypto from 'crypto';
-//import Redis from 'redis';
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
 const socket = io.connect("http://localhost:3001")
