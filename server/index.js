@@ -56,12 +56,12 @@ io.on("connection", (socket) => {
         getRandomDream();
     });
 
-    socket.on("guess_u", (guess) => {
-        io.emit("guess_d", guess);
+    socket.on("guess", (guess) => {
         guessCount++;
         if (guessCount === playerCount){
             console.log("server side all guessed: "+ redisResult);
             io.emit("all_guessed", {redisResult, guess} );
+            guessCount = 0;
         }
     });
 

@@ -34,8 +34,10 @@ function App() {
   // player guesses
   const guess = (data) => {
     myGuess = data;
-    console.log(myGuess);
-    socket.emit("guess_u", name);
+    socket.emit("guess", myGuess);
+    console.log("guesser: " + name);
+    console.log("my guess: " + myGuess);
+    setGuessed(previous => [...previous, data]);
   }
 
   // send message to socket
@@ -68,12 +70,6 @@ function App() {
       console.log("dreamer: " + data.dreamer);
     });
 
-    socket.on("guess_d", (data) => {
-      setGuessed(previous => [...previous, data]);
-      console.log("guessed: " + data);
-      
-    });
-
     socket.on("all_guessed", (data) => {
       if (data.redisResult === data.guess) {
         setTextSection("CORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + data.guess);
@@ -86,7 +82,6 @@ function App() {
     return () => {
       socket.off("player_join_d");
       socket.off("get_random_dream_d");
-      socket.off("guess_d");
       socket.off("all_guessed");
     };
 
