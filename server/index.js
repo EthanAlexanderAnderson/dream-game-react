@@ -21,7 +21,8 @@ let dreamer = "";
 
 const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",
+      //origin: "http://localhost:3000", // FOR LOCAL
+      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/"], // FOR PROD
       methods: ["GET", "POST"],
     },
 });

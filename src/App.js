@@ -1,7 +1,8 @@
 import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
-const socket = io.connect(process.env.PORT || "http://localhost:3001");
+//const socket = io.connect("http://localhost:3001"); // FOR LOCAL
+const socket = io.connect("https://dreamgame.herokuapp.com/"); // FOR PROD
 
 function App() {
   // states
