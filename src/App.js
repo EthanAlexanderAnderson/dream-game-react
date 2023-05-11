@@ -34,7 +34,7 @@ function App() {
   // player guesses
   const guess = (data) => {
     myGuess = data;
-    socket.emit("guess", myGuess);
+    socket.emit("guess");
     console.log("guesser: " + name);
     console.log("my guess: " + myGuess);
     setStatus("guessed");
@@ -109,7 +109,7 @@ function App() {
       </div>
       <h1>{dreamer}</h1>
       <div>
-        <img src={imageSection}></img>
+        <img src={imageSection} alt=""></img>
       </div>
 
     </div>

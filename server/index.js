@@ -16,8 +16,6 @@ app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 let redisResult = "default redisResult value";
 let playerCount = 0;
 let guessCount = 0;
-let dream = "";
-let dreamer = "";
 
 const io = new Server(server, {
     cors: {
@@ -30,8 +28,6 @@ const io = new Server(server, {
 // Real epic stuff starts here --------------------------------
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
-    let dreamer = "";
-
     console.log(`User Connected: ${socket.id}`);
 
     socket.on("disconnect", () => {
@@ -56,7 +52,7 @@ io.on("connection", (socket) => {
         getRandomDream();
     });
 
-    socket.on("guess", (guess) => {
+    socket.on("guess", () => {
         guessCount++;
         if (guessCount === playerCount){
             console.log("server side all guessed: "+ redisResult);
