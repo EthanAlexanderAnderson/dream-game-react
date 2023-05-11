@@ -60,7 +60,7 @@ io.on("connection", (socket) => {
         guessCount++;
         if (guessCount === playerCount){
             console.log("server side all guessed: "+ redisResult);
-            io.emit("all_guessed", {redisResult, guess} );
+            io.emit("all_guessed", redisResult);
             guessCount = 0;
         }
     });

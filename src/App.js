@@ -1,8 +1,8 @@
 import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
-//const socket = io.connect("http://localhost:3001"); // FOR LOCAL
-const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
+const socket = io.connect("http://localhost:3001"); // FOR LOCAL
+//const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
 var myGuess = "";
 
 function App() {
@@ -13,7 +13,6 @@ function App() {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [players, setPlayers] = useState([]);
-  const [guessed, setGuessed] = useState([]);
   let dreamer = "";
 
   // player come online
@@ -37,7 +36,6 @@ function App() {
     socket.emit("guess", myGuess);
     console.log("guesser: " + name);
     console.log("my guess: " + myGuess);
-    setGuessed(previous => [...previous, data]);
   }
 
   // send message to socket
@@ -45,42 +43,42 @@ function App() {
     socket.emit("send_message", { message, name });
   }
 
-  const end = () => {
-    console.log("asdasdasdada "+myGuess);
-  };
+  // socket handlers -----------
+  const receiveMessage = (data) => {
+    setMessageReceived(data.name + ": " + data.message);
+  }
 
-  const listener = (data) => {
-    if (data.redisResult === myGuess) {
-      setTextSection("CORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + myGuess);
+  const playerJoinD = (data) => {
+    setPlayers(previous => [...previous, data.data])
+  }
+
+  const getRandomDreamD = (data) => {
+    setTextSection(data.dream);
+    setStatus("during");
+    dreamer = data.dreamer;
+    console.log("dreamer: " + data.dreamer);
+  }
+
+  // when all players guessed
+  const allGuessed = (answer) => {
+    if (answer === myGuess) {
+      setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
     } else {
-      setTextSection("INCORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + myGuess);
+      setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
     }
     setStatus("after");
   }
 
   // receive from socket
-  useEffect(( myGuess ) => {
+  useEffect(() => {
 
-    socket.on("receive_message", (data) => {
-      var message = data.message;
-      var name = data.name;
-      setMessageReceived(name + ": " + message);
-    });
-
-    socket.on("player_join_d", (data) => {
-      setPlayers(previous => [...previous, data.data])
-    });
-
-    socket.on("get_random_dream_d", (data) => {
-      setTextSection(data.dream);
-      setStatus("during");
-      dreamer = data.dreamer;
-      console.log("dreamer: " + data.dreamer);
-    });
-
-    socket.on("all_guessed", listener);
+    socket.on("receive_message", receiveMessage);
+    socket.on("player_join_d", playerJoinD);
+    socket.on("get_random_dream_d", getRandomDreamD);
+    socket.on("all_guessed", allGuessed);
 
     return () => {
+      socket.off("receive_message");
       socket.off("player_join_d");
       socket.off("get_random_dream_d");
       socket.off("all_guessed");
