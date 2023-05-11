@@ -1,8 +1,8 @@
 import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
-const socket = io.connect("http://localhost:3001"); // FOR LOCAL
-//const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
+//const socket = io.connect("http://localhost:3001"); // FOR LOCAL
+const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
 var myGuess = "";
 
 function App() {
