@@ -1,7 +1,7 @@
 import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
-const socket = io.connect("http://localhost:3001")
+const socket = io.connect(process.env.PORT || "http://localhost:3001");
 
 function App() {
   // states
@@ -11,11 +11,8 @@ function App() {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [players, setPlayers] = useState([]);
-  //const [myGuess, setMyGuess] = useState("");
   let myGuess = "";
   const [guessed, setGuessed] = useState([]);
-  //const [dreamer, setDreamer] = useState("");
-
   let dreamer = "";
 
   // player come online
@@ -35,8 +32,6 @@ function App() {
 
   // player guesses
   const guess = (data) => {
-    //console.log(data);
-    //setMyGuess(data);
     myGuess = data;
     console.log(myGuess);
     socket.emit("guess_u", name);
