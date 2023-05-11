@@ -10,6 +10,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [messageReceived, setMessageReceived] = useState("");
   const [textSection, setTextSection] = useState("Welcome to Dream Game.\nPlease select your name:");
+  const [imageSection, setImageSection] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [players, setPlayers] = useState([]);
@@ -58,6 +59,8 @@ function App() {
     setStatus("during");
     dreamer = data.dreamer;
     console.log("dreamer: " + data.dreamer);
+    let link = data.dream.split(" ").join("_");
+    setImageSection("https://image.pollinations.ai/prompt/"+link);
   }
 
   // when all players guessed
@@ -105,6 +108,9 @@ function App() {
         })}
       </div>
       <h1>{dreamer}</h1>
+      <div>
+        <img src={imageSection}></img>
+      </div>
 
     </div>
   );
