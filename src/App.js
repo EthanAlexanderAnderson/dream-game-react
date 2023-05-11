@@ -3,6 +3,7 @@ import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
 //const socket = io.connect("http://localhost:3001"); // FOR LOCAL
 const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
+var myGuess = "";
 
 function App() {
   // states
@@ -12,7 +13,6 @@ function App() {
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [players, setPlayers] = useState([]);
-  let myGuess = "";
   const [guessed, setGuessed] = useState([]);
   let dreamer = "";
 
@@ -49,6 +49,15 @@ function App() {
     console.log("asdasdasdada "+myGuess);
   };
 
+  const listener = (data) => {
+    if (data.redisResult === data.guess) {
+      setTextSection("CORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + myGuess);
+    } else {
+      setTextSection("INCORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + myGuess);
+    }
+    setStatus("after");
+  }
+
   // receive from socket
   useEffect(( myGuess ) => {
 
@@ -65,19 +74,11 @@ function App() {
     socket.on("get_random_dream_d", (data) => {
       setTextSection(data.dream);
       setStatus("during");
-      //setDreamer(data.dreamer);
       dreamer = data.dreamer;
       console.log("dreamer: " + data.dreamer);
     });
 
-    socket.on("all_guessed", (data) => {
-      if (data.redisResult === data.guess) {
-        setTextSection("CORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + data.guess);
-      } else {
-        setTextSection("INCORRECT\nANSWER: " + data.redisResult + "\nYou guessed: " + data.guess);
-      }
-      setStatus("after");
-    });
+    socket.on("all_guessed", listener);
 
     return () => {
       socket.off("player_join_d");
