@@ -64,7 +64,7 @@ function App() {
     setTextSection(data.dream);
     setStatus("during");
     console.log("dreamer: " + data.dreamer);
-    setImage(data.dream.split(" ").join("_"));
+    setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
   }
 
   // when all players guessed
