@@ -2,7 +2,8 @@ import React from "react";
 
 function PlayerSection(props) {
     if (!(props.name === "")){
-        if (Array.isArray(props.scores)) {   
+        if (Array.isArray(props.scores)) {
+            props.scores.sort((a, b) => b[2] - a[2]); 
             return (
                 <table className="table">
                     <thead>
