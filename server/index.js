@@ -9,21 +9,19 @@ app.use(cors());
 const server = http.createServer(app);
 const path = require('path');
 
-app.use(express.static(path_join(__dirname, '/../client/build')));
-app.get('*', (req, res) => { 
-    res.sendFile(path_join(__dirname, '/../client/public/index.html'));
-});
+app.use(express.static(path.join(__dirname, '../build')));
+app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 
 // dreamgame variables
 let redisResult = "default redisResult value";
 let playerCount = 0;
 let guessCount = 0;
-let dream = "";
-let dreamer = "";
+let scores = [];
 
 const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",
+      //origin: "http://localhost:3000", // FOR LOCAL
+      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/"], // FOR PROD
       methods: ["GET", "POST"],
     },
 });
@@ -31,25 +29,32 @@ const io = new Server(server, {
 // Real epic stuff starts here --------------------------------
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
-    let dreamer = "";
-
     console.log(`User Connected: ${socket.id}`);
 
     socket.on("disconnect", () => {
         console.log("A user disconnected");
-        playerCount--;
+        // only decrease playercount if the user had selected a name
+        if (scores.some(item => item[0] === socket.id)){
+            playerCount--;
+        }        
         guessCount = 0;
         if (playerCount < 0){
             playerCount = 0;
         }
-        console.log("PC: " + playerCount);
+        scores = scores.filter(subArr => !subArr.includes(socket.id));
+        io.emit("update_scores", scores);
+        console.log("Player Count: " + playerCount);
       });
   
     // After new player selects their name
-    socket.on("player_join_u", (data) => {
-        socket.broadcast.emit("player_join_d", data);
+    socket.on("player_join_u", (name) => {
+        socket.broadcast.emit("player_join_d", name);
         playerCount++;
-        console.log("PC: " + playerCount);
+        if (!scores.some(item => item[1] === name)){
+            scores.push([socket.id, name, 0]);
+        }
+        console.log("Player Count: " + playerCount);
+        io.emit("update_scores", scores);
     });
 
     // After new player selects their name
@@ -57,12 +62,12 @@ io.on("connection", (socket) => {
         getRandomDream();
     });
 
-    socket.on("guess_u", (guess) => {
-        io.emit("guess_d", guess);
+    socket.on("guess", () => {
         guessCount++;
         if (guessCount === playerCount){
             console.log("server side all guessed: "+ redisResult);
-            io.emit("all_guessed", {redisResult, guess} );
+            io.emit("all_guessed", redisResult);
+            guessCount = 0;
         }
     });
 
@@ -70,6 +75,11 @@ io.on("connection", (socket) => {
         var message = data.message;
         var name = data.name;
         socket.broadcast.emit('receive_message', { message, name });
+    });
+
+    socket.on("increment_score", () => {
+        scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
+        io.emit("update_scores", scores);
     });
 });
 
