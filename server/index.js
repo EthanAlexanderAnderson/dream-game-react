@@ -38,18 +38,19 @@ io.on("connection", (socket) => {
         if (playerCount < 0){
             playerCount = 0;
         }
-        console.log("PC: " + playerCount);
+        scores = scores.filter(subArr => !subArr.includes(socket.id));
+        io.emit("update_scores", scores);
+        console.log("Player Count: " + playerCount);
       });
   
     // After new player selects their name
-    socket.on("player_join_u", (data) => {
-        socket.broadcast.emit("player_join_d", data);
+    socket.on("player_join_u", (name) => {
+        socket.broadcast.emit("player_join_d", name);
         playerCount++;
-        if (!scores.some(item => item[0] === data.data)){
-            scores.push([data.data, 0]);
+        if (!scores.some(item => item[1] === name)){
+            scores.push([socket.id, name, 0]);
         }
-        console.log("PC: " + playerCount);
-        console.log("Scores: " + scores);
+        console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
     });
 
@@ -71,6 +72,11 @@ io.on("connection", (socket) => {
         var message = data.message;
         var name = data.name;
         socket.broadcast.emit('receive_message', { message, name });
+    });
+
+    socket.on("increment_score", () => {
+        scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
+        io.emit("update_scores", scores);
     });
 });
 

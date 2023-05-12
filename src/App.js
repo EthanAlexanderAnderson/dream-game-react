@@ -2,8 +2,10 @@ import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
 import PlayerSection from './playerSection';
-//const socket = io.connect("http://localhost:3001"); // FOR LOCAL
-const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
+var socket = io({ autoConnect: false });
+const IS_PROD = process.env.NODE_ENV === "production";
+const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
+
 var myGuess = "";
 
 function App() {
@@ -18,13 +20,15 @@ function App() {
   const [scores, setScores] = useState([]);
 
   // player come online
-  const playerJoin = (data) => {
+  const playerJoin = (name) => {
+    // connect to server
+    socket = io.connect(URL);
     // set name on user
-    setName(data);
+    setName(name);
     // update player list on user
-    setPlayers(previous => [...previous, data])
+    setPlayers(previous => [...previous, name])
     // update player list on peers
-    socket.emit("player_join_u", { data });
+    socket.emit("player_join_u", name);
   };
 
   // start round
@@ -67,6 +71,7 @@ function App() {
   const allGuessed = (answer) => {
     if (answer === myGuess) {
       setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
+      socket.emit("increment_score");
     } else {
       setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
     }
@@ -75,7 +80,6 @@ function App() {
 
   const updateScores = (data) => {
     setScores(data);
-    console.log(scores);
   }
 
   // receive from socket
@@ -100,14 +104,12 @@ function App() {
   return (
     <div className="App container w-60 text-center" style={{whiteSpace: `pre-line`}}>
 
-      <h1>Name: {name}</h1>
       <br></br>
-
       <p>{textSection}</p>
       <NameButtons name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
       <br></br>
 
-      <PlayerSection scores={scores} />
+      <PlayerSection name={name} scores={scores} />
       <div>
         <img src={imageSection} alt=""></img>
       </div>

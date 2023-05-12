@@ -1,7 +1,7 @@
 import React from "react";
 
 function NameButtons(props) {
-    if (props.name.length === 0 ){
+    if (props.name === "" ){
         return (
             <div id="NameButtons">
                 <p>Welcome to Dream Game. Please select your name:</p>
