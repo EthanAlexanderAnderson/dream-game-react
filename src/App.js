@@ -111,7 +111,7 @@ function App() {
 
       <PlayerSection name={name} scores={scores} />
       <div>
-        <img src={imageSection} alt=""></img>
+        <img src={imageSection} alt="" className="w-75"></img>
       </div>
 
     </div>
