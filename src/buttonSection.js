@@ -1,9 +1,9 @@
 import React from "react";
 
-function NameButtons(props) {
+function ButtonSection(props) {
     if (props.name === "" ){
         return (
-            <div id="NameButtons">
+            <div id="ButtonSection">
                 <p>Welcome to Dream Game. Please select your name:</p>
                 <button onClick={() => props.playerJoin("Ethan")}>Ethan</button>
                 <button onClick={() => props.playerJoin("Cole")}>Cole</button>
@@ -54,4 +54,4 @@ function NameButtons(props) {
     }
 }
 
-export default NameButtons;
+export default ButtonSection;

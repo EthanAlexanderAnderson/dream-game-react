@@ -1,6 +1,6 @@
 import io from 'socket.io-client'
 import { useEffect, useState} from "react";
-import NameButtons from './nameButtons';
+import ButtonSection from './buttonSection';
 import PlayerSection from './playerSection';
 import ImageSection from './imageSection';
 var socket = io({ autoConnect: false });
@@ -106,11 +106,11 @@ function App() {
 
       <br></br>
       <p>{textSection}</p>
-      <NameButtons name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
+      <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
       <br></br>
 
       <PlayerSection name={name} scores={scores} />
-      
+
       <ImageSection image={image} />
 
     </div>
