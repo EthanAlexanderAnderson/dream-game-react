@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, '../build')));
 app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 
 // dreamgame variables
-let redisResult = "default redisResult value";
+let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
 let scores = [];
@@ -30,10 +30,10 @@ const io = new Server(server, {
 // Real epic stuff starts here --------------------------------
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
-    console.log(`User Connected: ${socket.id}`);
 
     socket.on("disconnect", () => {
-        console.log(`User Disconnected: ${socket.id}`);
+        const name = scores.find(subarray => subarray[0] === socket.id);
+        if (Array.isArray(name)) {console.log(`User Disconnected: ${socket.id} ${name[1]}`);}
         // only decrease playercount if the user had selected a name
         if (scores.some(item => item[0] === socket.id)){
             playerCount--;
@@ -55,6 +55,7 @@ io.on("connection", (socket) => {
   
     // After new player selects their name
     socket.on("player_join_u", (name) => {
+        console.log(`User Connected: ${socket.id} ${name}`);
         socket.broadcast.emit("player_join_d", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
@@ -78,7 +79,7 @@ io.on("connection", (socket) => {
     socket.on("guess", () => {
         guessCount++;
         if (guessCount === playerCount){
-            console.log("server side all guessed: "+ redisResult);
+            console.log("Server side all guessed. Dreamer: "+ redisResult);
             io.emit("all_guessed", redisResult);
             guessCount = 0;
             status = "after";
