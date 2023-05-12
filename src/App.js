@@ -2,6 +2,7 @@ import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
 import PlayerSection from './playerSection';
+import ImageSection from './imageSection';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
@@ -13,7 +14,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [messageReceived, setMessageReceived] = useState("");
   const [textSection, setTextSection] = useState("");
-  const [imageSection, setImageSection] = useState("");
+  const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [players, setPlayers] = useState([]);
@@ -63,8 +64,7 @@ function App() {
     setTextSection(data.dream);
     setStatus("during");
     console.log("dreamer: " + data.dreamer);
-    let link = data.dream.split(" ").join("_");
-    setImageSection("https://image.pollinations.ai/prompt/"+link);
+    setImage(data.dream.split(" ").join("_"));
   }
 
   // when all players guessed
@@ -110,9 +110,8 @@ function App() {
       <br></br>
 
       <PlayerSection name={name} scores={scores} />
-      <div style={{height: "600px"}}>
-        <img src={imageSection} alt="" className="w-75 mh-100" style={{ objectFit: "contain" }}></img>
-      </div>
+      
+      <ImageSection image={image} />
 
     </div>
   );
