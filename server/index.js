@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
     socket.on("disconnect", () => {
-        console.log("A user disconnected");
+        console.log(`User Disconnected: ${socket.id}`);
         // only decrease playercount if the user had selected a name
         if (scores.some(item => item[0] === socket.id)){
             playerCount--;
