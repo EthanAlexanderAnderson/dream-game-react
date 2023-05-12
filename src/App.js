@@ -76,6 +76,7 @@ function App() {
       setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
     }
     setStatus("after");
+    setImage("");
   }
 
   const updateScores = (data) => {
