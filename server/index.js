@@ -17,6 +17,7 @@ let redisResult = "default redisResult value";
 let playerCount = 0;
 let guessCount = 0;
 let scores = [];
+let status = "before";
 
 const io = new Server(server, {
     cors: {
@@ -36,8 +37,14 @@ io.on("connection", (socket) => {
         // only decrease playercount if the user had selected a name
         if (scores.some(item => item[0] === socket.id)){
             playerCount--;
+            // prevents bricking from mid-round leavers
+            if (guessCount === playerCount){
+                console.log("server side all guessed: "+ redisResult);
+                io.emit("all_guessed", redisResult);
+                guessCount = 0;
+                status = "after";
+            }
         }        
-        guessCount = 0;
         if (playerCount < 0){
             playerCount = 0;
         }
@@ -59,7 +66,13 @@ io.on("connection", (socket) => {
 
     // After new player selects their name
     socket.on("get_random_dream_u", (data) => {
-        getRandomDream();
+        // this if statement with new/refresh stops mid-round joiners from triggering new dream
+        if (!(status === "during")){
+            getRandomDream("new", socket);
+            status = "during";
+        } else {
+            getRandomDream("refresh", socket);
+        }
     });
 
     socket.on("guess", () => {
@@ -68,6 +81,7 @@ io.on("connection", (socket) => {
             console.log("server side all guessed: "+ redisResult);
             io.emit("all_guessed", redisResult);
             guessCount = 0;
+            status = "after";
         }
     });
 
@@ -94,16 +108,21 @@ async function redisGet(key) {
         redisResult = result;
       })
 }
-
-async function getRandomDream(){
-    await redisGet("&dreamcount");
-    let count = parseInt(redisResult);
-    let rng = Math.floor(Math.random() * Math.floor(count));
-    await redisGet("&dream"+rng);
-    let dream = redisResult;
-    await redisGet("&dreamer"+rng);
-    let dreamer = redisResult;
-    io.emit("get_random_dream_d", { dream, dreamer} );
+var dream = "";
+var dreamer = "";
+async function getRandomDream(type, socket){
+    if (type === "new") {
+        await redisGet("&dreamcount");
+        let count = parseInt(redisResult);
+        let rng = Math.floor(Math.random() * Math.floor(count));
+        await redisGet("&dream"+rng);
+        dream = redisResult;
+        await redisGet("&dreamer"+rng);
+        dreamer = redisResult;
+        io.emit("get_random_dream_d", { dream, dreamer} );
+    } else {
+        socket.emit("get_random_dream_d", { dream, dreamer} );
+    }
 }
 
 /* notes
