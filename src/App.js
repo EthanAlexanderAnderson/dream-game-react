@@ -110,8 +110,8 @@ function App() {
       <br></br>
 
       <PlayerSection name={name} scores={scores} />
-      <div>
-        <img src={imageSection} alt="" className="w-75"></img>
+      <div style={{height: "600px"}}>
+        <img src={imageSection} alt="" className="w-75 mh-100" style={{ objectFit: "contain" }}></img>
       </div>
 
     </div>
