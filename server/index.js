@@ -33,7 +33,10 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
         console.log("A user disconnected");
-        playerCount--;
+        // only decrease playercount if the user had selected a name
+        if (scores.some(item => item[0] === socket.id)){
+            playerCount--;
+        }        
         guessCount = 0;
         if (playerCount < 0){
             playerCount = 0;
