@@ -49,8 +49,8 @@ io.on("connection", (socket) => {
     // After new player selects their name
     socket.on("player_join_u", (name) => {
         socket.broadcast.emit("player_join_d", name);
-        playerCount++;
         if (!scores.some(item => item[1] === name)){
+            playerCount++;
             scores.push([socket.id, name, 0]);
         }
         console.log("Player Count: " + playerCount);
