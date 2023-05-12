@@ -16,6 +16,7 @@ app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 let redisResult = "default redisResult value";
 let playerCount = 0;
 let guessCount = 0;
+let scores = [];
 
 const io = new Server(server, {
     cors: {
@@ -44,7 +45,12 @@ io.on("connection", (socket) => {
     socket.on("player_join_u", (data) => {
         socket.broadcast.emit("player_join_d", data);
         playerCount++;
+        if (!scores.some(item => item[0] === data.data)){
+            scores.push([data.data, 0]);
+        }
         console.log("PC: " + playerCount);
+        console.log("Scores: " + scores);
+        io.emit("update_scores", scores);
     });
 
     // After new player selects their name

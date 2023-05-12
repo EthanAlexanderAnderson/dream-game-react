@@ -4,6 +4,7 @@ function NameButtons(props) {
     if (props.name.length === 0 ){
         return (
             <div id="NameButtons">
+                <p>Welcome to Dream Game. Please select your name:</p>
                 <button onClick={() => props.playerJoin("Ethan")}>Ethan</button>
                 <button onClick={() => props.playerJoin("Cole")}>Cole</button>
                 <button onClick={() => props.playerJoin("Nathan")}>Nathan</button>

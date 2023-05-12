@@ -1,6 +1,7 @@
 import io from 'socket.io-client'
 import { useEffect, useState} from "react";
 import NameButtons from './nameButtons';
+import PlayerSection from './playerSection';
 //const socket = io.connect("http://localhost:3001"); // FOR LOCAL
 const socket = io.connect("http://www.ethananderson.ca/"); // FOR PROD
 var myGuess = "";
@@ -9,12 +10,12 @@ function App() {
   // states
   const [message, setMessage] = useState("");
   const [messageReceived, setMessageReceived] = useState("");
-  const [textSection, setTextSection] = useState("Welcome to Dream Game.\nPlease select your name:");
+  const [textSection, setTextSection] = useState("");
   const [imageSection, setImageSection] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("");
   const [players, setPlayers] = useState([]);
-  let dreamer = "";
+  const [scores, setScores] = useState([]);
 
   // player come online
   const playerJoin = (data) => {
@@ -57,7 +58,6 @@ function App() {
   const getRandomDreamD = (data) => {
     setTextSection(data.dream);
     setStatus("during");
-    dreamer = data.dreamer;
     console.log("dreamer: " + data.dreamer);
     let link = data.dream.split(" ").join("_");
     setImageSection("https://image.pollinations.ai/prompt/"+link);
@@ -73,6 +73,11 @@ function App() {
     setStatus("after");
   }
 
+  const updateScores = (data) => {
+    setScores(data);
+    console.log(scores);
+  }
+
   // receive from socket
   useEffect(() => {
 
@@ -80,6 +85,7 @@ function App() {
     socket.on("player_join_d", playerJoinD);
     socket.on("get_random_dream_d", getRandomDreamD);
     socket.on("all_guessed", allGuessed);
+    socket.on("update_scores", updateScores);
 
     return () => {
       socket.off("receive_message");
@@ -92,7 +98,7 @@ function App() {
 
   // display
   return (
-    <div className="App" style={{whiteSpace: `pre-line`}}>
+    <div className="App container w-60 text-center" style={{whiteSpace: `pre-line`}}>
 
       <h1>Name: {name}</h1>
       <br></br>
@@ -101,13 +107,7 @@ function App() {
       <NameButtons name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
       <br></br>
 
-      <h1>Players:</h1>
-      <div>
-        {players.map(item => {
-          return <div>{item}</div>;
-        })}
-      </div>
-      <h1>{dreamer}</h1>
+      <PlayerSection scores={scores} />
       <div>
         <img src={imageSection} alt=""></img>
       </div>
@@ -119,6 +119,12 @@ function App() {
 export default App;
 
 /*
+      <h1>Players:</h1>
+      <div>
+        {players.map(item => {
+          return <div>{item}</div>;
+        })}
+      </div>
 
       <input 
         placeholder="Message..." 
