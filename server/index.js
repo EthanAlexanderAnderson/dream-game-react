@@ -13,10 +13,12 @@ app.use(express.static(path.join(__dirname, '../build')));
 app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 
 // dreamgame variables
+var names = ["Ethan", "Nathan", "Cole", "Max", "Devon", "Oobie", "Eric", "Dylan", "Adam", "Mitch", "Jack", "Zach", "Devo", "Eddie"]
 let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
 let scores = [];
+let stats = [];
 let status = "before";
 
 const io = new Server(server, {
@@ -30,6 +32,8 @@ const io = new Server(server, {
 // Real epic stuff starts here --------------------------------
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
+
+    updateStats();
 
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
@@ -63,9 +67,9 @@ io.on("connection", (socket) => {
       });
   
     // After new player selects their name
-    socket.on("player_join_u", (name) => {
+    socket.on("player_join", (name) => {
         console.log(`User Connected: ${socket.id} ${name}`);
-        socket.broadcast.emit("player_join_d", name);
+        socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
             // scores variable items: id, name, score, ready, guess
@@ -79,12 +83,12 @@ io.on("connection", (socket) => {
     socket.on("get_random_dream_u", (data) => {
         // this if statement with new/refresh stops mid-round joiners from triggering new dream
         if (!(status === "during")){
-            getRandomDream("new", socket);
+            updateRandomDream("new", socket);
             status = "during";
             setReady("all", "Waiting...");
             io.emit("update_scores", scores);
         } else {
-            getRandomDream("refresh", socket);
+            updateRandomDream("refresh", socket);
         }
     });
 
@@ -120,7 +124,7 @@ server.listen(process.env.PORT || 3001, () => {
 });
 
 // helper funcs -----------------------------
-async function redisGet(key) {
+async function fetch(key) {
     let out = client.get(key);
     await out.then(function(result) {
         redisResult = result;
@@ -128,20 +132,33 @@ async function redisGet(key) {
 }
 var dream = "";
 var dreamer = "";
-async function getRandomDream(type, socket){
+async function updateRandomDream(type, socket){
     if (type === "new") {
-        await redisGet("&dreamcount");
+        await fetch("&dreamcount");
         let count = parseInt(redisResult);
         let rng = Math.floor(Math.random() * Math.floor(count));
-        await redisGet("&dream"+rng);
+        await fetch("&dream"+rng);
         dream = redisResult;
-        await redisGet("&dreamer"+rng);
+        await fetch("&dreamer"+rng);
         dreamer = redisResult;
         io.emit("get_random_dream_d", { dream, dreamer} );
     } else {
         socket.emit("get_random_dream_d", { dream, dreamer} );
     }
 }
+
+async function updateStats() {
+    stats = [];
+    for (let n of names) {
+        await fetch("%" + n);
+        let temp = redisResult.split(",")
+        temp.unshift(n)
+        stats.push(temp);
+    }
+    io.emit("update_stats", stats);
+}
+
+// GETTERS AND SETTERS FOR scores VARIABLE
 
 function getName(socket) {
     const name = scores.find(subarray => subarray[0] === socket.id);
@@ -206,6 +223,15 @@ so
 have your socket.on call some random async function
 (IT CAN'T DO ANYTHING ELSE)
 and then have that random async function do your dirty work
-and use await for every redisGet
-then get the return of redisGet from redisResult variable
+and use await for every fetch
+then get the return of fetch from redisResult variable
+
+naming conventions:
+fetch = get from redis
+write = set to redis
+get = get variable in server
+set = set variable in server
+update = server to client
+send = client to server
+request = client to sever expecting a return update
 */

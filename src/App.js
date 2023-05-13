@@ -19,6 +19,7 @@ function App() {
   const [status, setStatus] = useState("before");
   const [players, setPlayers] = useState([]);
   const [scores, setScores] = useState([]);
+  const [stats, setStats] = useState([]);
 
   // player come online
   const playerJoin = (name) => {
@@ -29,7 +30,7 @@ function App() {
     // update player list on user
     setPlayers(previous => [...previous, name])
     // update player list on peers
-    socket.emit("player_join_u", name);
+    socket.emit("player_join", name);
   };
 
   // start round
@@ -56,7 +57,7 @@ function App() {
     setMessageReceived(data.name + ": " + data.message);
   }
 
-  const playerJoinD = (data) => {
+  const updatePlayers = (data) => {
     setPlayers(previous => [...previous, data.data])
   }
 
@@ -83,14 +84,19 @@ function App() {
     setScores(data);
   }
 
+  const updateStats = (data) => {
+    setStats(data);
+  }
+
   // receive from socket
   useEffect(() => {
 
     socket.on("receive_message", receiveMessage);
-    socket.on("player_join_d", playerJoinD);
+    socket.on("update_players", updatePlayers);
     socket.on("get_random_dream_d", getRandomDreamD);
     socket.on("all_guessed", allGuessed);
     socket.on("update_scores", updateScores);
+    socket.on("update_stats", updateStats);
 
     return () => {
       socket.off("receive_message");
@@ -110,7 +116,7 @@ function App() {
       <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
       <br></br>
 
-      <PlayerSection name={name} scores={scores} status={status}/>
+      <PlayerSection name={name} scores={scores} stats={stats} status={status}/>
 
       <ImageSection image={image} />
 
