@@ -5,7 +5,7 @@ function PlayerSection(props) {
         if (Array.isArray(props.scores)) {
             props.scores.sort((a, b) => b[2] - a[2]); 
             return (
-                <table className="table">
+                <table className="table" style={{color: "#EEEEEE"}}>
                     <thead>
                         <tr>
                             <th scope="col">Player</th>
