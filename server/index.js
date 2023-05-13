@@ -100,8 +100,8 @@ io.on("connection", (socket) => {
         setGuess(socket, guess);
         io.emit("update_scores", scores);
         if (guessCount === playerCount){
-            console.log("Server side all guessed. Dreamer: "+ redisResult);
-            io.emit("all_guessed", redisResult);
+            console.log("Server side all guessed. Dreamer: "+ dreamer);
+            io.emit("all_guessed", dreamer);
             guessCount = 0;
             status = "after";
         }
