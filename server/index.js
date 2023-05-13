@@ -37,6 +37,11 @@ io.on("connection", (socket) => {
         // only decrease playercount if the user had selected a name
         if (scores.some(item => item[0] === socket.id)){
             playerCount--;
+
+            if (getReady(socket) === "Ready") {
+                guessCount--;
+            }
+
             // prevents bricking from mid-round leavers
             if (guessCount === playerCount){
                 console.log("server side all guessed: "+ redisResult);
