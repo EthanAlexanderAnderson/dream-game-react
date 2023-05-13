@@ -52,11 +52,14 @@ io.on("connection", (socket) => {
         }        
         if (playerCount <= 0){
             playerCount = 0;
+        }
+        if (playerCount <= 0 || guessCount <= 0){
             guessCount = 0;
         }
         scores = scores.filter(subArr => !subArr.includes(socket.id));
         io.emit("update_scores", scores);
-        console.log("Player Count: " + playerCount);
+        console.log("Player Count: " + playerCount)
+        console.log("Guess Count: " + guessCount);;
       });
   
     // After new player selects their name
@@ -87,7 +90,8 @@ io.on("connection", (socket) => {
 
     socket.on("guess", (guess) => { 
         console.log("server side recieved guess of:" + guess + "  From guesser: " + getName(socket));
-        guessCount++; 
+        guessCount++;
+        console.log("Guess Count: " + guessCount); 
         setReady(socket, "Ready");
         setGuess(socket, guess);
         io.emit("update_scores", scores);
