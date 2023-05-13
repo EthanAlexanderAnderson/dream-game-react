@@ -10,6 +10,7 @@ function PlayerSection(props) {
                         <tr>
                             <th scope="col">Player</th>
                             <th scope="col">Scores</th>
+                            <th scope="col">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -18,6 +19,7 @@ function PlayerSection(props) {
                             <tr scope="row">
                                 <td>{item[1]}</td>
                                 <td>{item[2]}</td>
+                                <td>{item[3]}</td>
                             </tr>
                             );
                         })}

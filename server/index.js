@@ -59,7 +59,7 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("player_join_d", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
-            scores.push([socket.id, name, 0]);
+            scores.push([socket.id, name, 0, "Waiting..."]);
         }
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
@@ -71,13 +71,17 @@ io.on("connection", (socket) => {
         if (!(status === "during")){
             getRandomDream("new", socket);
             status = "during";
+            setReady("all", "Waiting...");
+            io.emit("update_scores", scores);
         } else {
             getRandomDream("refresh", socket);
         }
     });
 
     socket.on("guess", () => {
-        guessCount++;
+        guessCount++; 
+        setReady(socket, "Ready");
+        io.emit("update_scores", scores);
         if (guessCount === playerCount){
             console.log("Server side all guessed. Dreamer: "+ redisResult);
             io.emit("all_guessed", redisResult);
@@ -123,6 +127,40 @@ async function getRandomDream(type, socket){
         io.emit("get_random_dream_d", { dream, dreamer} );
     } else {
         socket.emit("get_random_dream_d", { dream, dreamer} );
+    }
+}
+
+function getName(socket) {
+    const name = scores.find(subarray => subarray[0] === socket.id);
+    if (Array.isArray(name)) {
+        return name[1];
+    }
+}
+
+function getScore(socket) {
+    const name = scores.find(subarray => subarray[0] === socket.id);
+    if (Array.isArray(name)) {
+        return name[2];
+    }
+}
+function getReady(socket) {
+    const name = scores.find(subarray => subarray[0] === socket.id);
+    if (Array.isArray(name)) {
+        return name[3];
+    }
+}
+
+function setReady(socket, value) {
+    if (socket === "all"){
+        for (let i = 0; i < scores.length; i++) {
+            scores[i][3] = value;
+        }
+    } else {
+        for (let i = 0; i < scores.length; i++) {
+            if (scores[i][0] === socket.id) {
+                scores[i][3] = value;
+            }
+        }
     }
 }
 
