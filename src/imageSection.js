@@ -9,8 +9,8 @@ function ImageSection(props) {
     }
     
     return (
-        <div style={{height: "600px"}}>
-            <img src={link} alt="" className="w-75 mh-100" style={{ objectFit: "contain"}}></img>
+        <div id="imageSection">
+            <img src={link} alt="" className="img-fluid"></img>
         </div>
     );
 };

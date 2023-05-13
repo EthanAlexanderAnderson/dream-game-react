@@ -1,0 +1,30 @@
+/* Dark Mode */
+#root, html, .table {
+    background-color: #222222; 
+    color: #EEEEEE;
+}
+
+.App {
+    white-space: pre-line;
+    text-align: center;
+}
+
+img {
+    object-fit: "contain";
+}
+
+#imageSection {
+    height: 600px;
+}
+
+/* default styles for mobile devices */
+.App {
+    width: 80%;
+}
+
+/* styles for desktop devices */
+@media (min-width: 768px) {
+    .App {
+        width: 50%;
+    }
+}

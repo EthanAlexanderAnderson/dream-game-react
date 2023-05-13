@@ -103,7 +103,7 @@ function App() {
 
   // display
   return (
-    <div className="App container w-60 text-center" style={{whiteSpace: `pre-line`}}>
+    <div className="App container">
 
       <br></br>
       <p>{textSection}</p>
