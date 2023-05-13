@@ -16,7 +16,7 @@ function App() {
   const [textSection, setTextSection] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("before");
   const [players, setPlayers] = useState([]);
   const [scores, setScores] = useState([]);
 
@@ -40,7 +40,7 @@ function App() {
   // player guesses
   const guess = (data) => {
     myGuess = data;
-    socket.emit("guess");
+    socket.emit("guess", myGuess);
     console.log("guesser: " + name);
     console.log("my guess: " + myGuess);
     setStatus("guessed");
@@ -110,7 +110,7 @@ function App() {
       <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
       <br></br>
 
-      <PlayerSection name={name} scores={scores} />
+      <PlayerSection name={name} scores={scores} status={status}/>
 
       <ImageSection image={image} />
 

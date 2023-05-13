@@ -50,8 +50,9 @@ io.on("connection", (socket) => {
                 status = "after";
             }
         }        
-        if (playerCount < 0){
+        if (playerCount <= 0){
             playerCount = 0;
+            guessCount = 0;
         }
         scores = scores.filter(subArr => !subArr.includes(socket.id));
         io.emit("update_scores", scores);
@@ -64,7 +65,8 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("player_join_d", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
-            scores.push([socket.id, name, 0, "Waiting..."]);
+            // scores variable items: id, name, score, ready, guess
+            scores.push([socket.id, name, 0, "Waiting...", "null"]);
         }
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
@@ -83,9 +85,11 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("guess", () => {
+    socket.on("guess", (guess) => { 
+        console.log("server side recieved guess of:" + guess + "  From guesser: " + getName(socket));
         guessCount++; 
         setReady(socket, "Ready");
+        setGuess(socket, guess);
         io.emit("update_scores", scores);
         if (guessCount === playerCount){
             console.log("Server side all guessed. Dreamer: "+ redisResult);
@@ -155,6 +159,13 @@ function getReady(socket) {
     }
 }
 
+function getGuess(socket) {
+    const name = scores.find(subarray => subarray[0] === socket.id);
+    if (Array.isArray(name)) {
+        return name[4];
+    }
+}
+
 function setReady(socket, value) {
     if (socket === "all"){
         for (let i = 0; i < scores.length; i++) {
@@ -164,6 +175,20 @@ function setReady(socket, value) {
         for (let i = 0; i < scores.length; i++) {
             if (scores[i][0] === socket.id) {
                 scores[i][3] = value;
+            }
+        }
+    }
+}
+
+function setGuess(socket, value) {
+    if (socket === "all"){
+        for (let i = 0; i < scores.length; i++) {
+            scores[i][4] = value;
+        }
+    } else {
+        for (let i = 0; i < scores.length; i++) {
+            if (scores[i][0] === socket.id) {
+                scores[i][4] = value;
             }
         }
     }
