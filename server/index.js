@@ -1,3 +1,4 @@
+// ---------- Don't touch this section ----------
 const redis = require("ioredis");
 const client = redis.createClient("redis://:pd461d2ca0afbb0e93ddfcda006691526b53a83f255f1420c145b5a39eec47ba9@ec2-52-45-198-235.compute-1.amazonaws.com:9719");
 const express = require("express");
@@ -8,9 +9,20 @@ const cors = require("cors");
 app.use(cors());
 const server = http.createServer(app);
 const path = require('path');
-
 app.use(express.static(path.join(__dirname, '../build')));
 app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
+
+const io = new Server(server, {
+    cors: {
+      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/"], // FOR PROD
+      methods: ["GET", "POST"],
+    },
+});
+
+server.listen(process.env.PORT || 3001, () => {
+    console.log("SERVER IS RUNNING");
+});
+// ---------- End of restricted section ----------
 
 // dreamgame variables
 var names = ["Ethan", "Nathan", "Cole", "Max", "Devon", "Oobie", "Eric", "Dylan", "Adam", "Mitch", "Jack", "Zach", "Devo", "Eddie"]
@@ -21,15 +33,6 @@ let scores = [];
 let stats = [];
 let status = "before";
 
-const io = new Server(server, {
-    cors: {
-      //origin: "http://localhost:3000", // FOR LOCAL
-      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/"], // FOR PROD
-      methods: ["GET", "POST"],
-    },
-});
-
-// Real epic stuff starts here --------------------------------
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
 
@@ -119,9 +122,6 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(process.env.PORT || 3001, () => {
-    console.log("SERVER IS RUNNING");
-});
 
 // helper funcs -----------------------------
 async function fetch(key) {
