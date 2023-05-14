@@ -111,9 +111,9 @@ io.on("connection", (socket) => {
     });
 
     socket.on("send_message", (data) => {
-        var message = data.message;
-        var name = data.name;
-        socket.broadcast.emit('receive_message', { message, name });
+        let message = data.message;
+        let name = data.name;
+        io.emit('receive_message', { message, name });
     });
 
     socket.on("increment_score", () => {

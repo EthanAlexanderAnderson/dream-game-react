@@ -3,7 +3,7 @@ import React from "react";
 function ButtonSection(props) {
     if (props.name === "" ){
         return (
-            <div id="ButtonSection">
+            <div id="buttonSection">
                 <p>Welcome to Dream Game. Please select your name:</p>
                 <button onClick={() => props.playerJoin("Ethan")}>Ethan</button>
                 <button onClick={() => props.playerJoin("Cole")}>Cole</button>
@@ -22,7 +22,7 @@ function ButtonSection(props) {
         );
     } else if (props.status === "during") {
         return(
-            <div id="GuessButtons">
+            <div id="guessButtons">
                 <button onClick={() => props.guess("Ethan")}>Ethan</button>
                 <button onClick={() => props.guess("Cole")}>Cole</button>
                 <button onClick={() => props.guess("Nathan")}>Nathan</button>
@@ -47,7 +47,7 @@ function ButtonSection(props) {
     }
     else {
         return(
-            <div id="ControlButtons">
+            <div id="controlButtons">
                 <button onClick={() => props.start()}>Start</button>
             </div>
         );

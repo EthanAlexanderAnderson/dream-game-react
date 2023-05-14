@@ -39,35 +39,37 @@ function PlayerSection(props) {
     if (!(props.name === "")){
         if (Array.isArray(playerSection)) { 
             return (
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th scope="col">Player</th>
-                            <th scope="col">Scores</th>
-                            <th scope="col">{colThree}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {playerSection.map((item) => {
-                            // show score (default)
-                            let itemThree = item[3];
-                            if (props.status === "after") {
-                                // show status
-                                itemThree = item[4];
-                            } else if (props.status === "before") {
-                                // show skill rating
-                                itemThree = item[5];
-                            }
-                            return (
-                            <tr scope="row">
-                                <td>{item[1]}</td>
-                                <td>{item[2]}</td>
-                                <td>{itemThree}</td>
+                <div id="playerSection">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Player</th>
+                                <th scope="col">Scores</th>
+                                <th scope="col">{colThree}</th>
                             </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {playerSection.map((item) => {
+                                // show score (default)
+                                let itemThree = item[3];
+                                if (props.status === "after") {
+                                    // show status
+                                    itemThree = item[4];
+                                } else if (props.status === "before") {
+                                    // show skill rating
+                                    itemThree = item[5];
+                                }
+                                return (
+                                <tr scope="row">
+                                    <td>{item[1]}</td>
+                                    <td>{item[2]}</td>
+                                    <td>{itemThree}</td>
+                                </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             );
         } else {
             return(<p>ERROR: SCORES NOT ARRAY</p>);

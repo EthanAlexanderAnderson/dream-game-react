@@ -3,6 +3,7 @@ import { useEffect, useState} from "react";
 import ButtonSection from './buttonSection';
 import PlayerSection from './playerSection';
 import ImageSection from './imageSection';
+import MessageSection from './messageSection';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
@@ -12,7 +13,7 @@ var myGuess = "";
 function App() {
   // states
   const [message, setMessage] = useState("");
-  const [messageReceived, setMessageReceived] = useState("");
+  const [messages, setMessages] = useState([]);
   const [textSection, setTextSection] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
@@ -54,7 +55,7 @@ function App() {
 
   // socket handlers -----------
   const receiveMessage = (data) => {
-    setMessageReceived(data.name + ": " + data.message);
+    setMessages(previous => [...previous, (data.name + ": " + data.message)]);
   }
 
   const updatePlayers = (data) => {
@@ -109,17 +110,23 @@ function App() {
 
   // display
   return (
-    <div className="App container">
+    <div className="App container row mx-auto">
+      
+      <div className='col-sm-6  order-md-2'>
+        <div id='textSection'>{textSection}</div>
+        <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
 
-      <br></br>
-      <p>{textSection}</p>
-      <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
-      <br></br>
+        <PlayerSection name={name} scores={scores} stats={stats} status={status}/>
 
-      <PlayerSection name={name} scores={scores} stats={stats} status={status}/>
+        <ImageSection image={image}/>
 
-      <ImageSection image={image} />
+      </div>
 
+      <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
+
+      <div className='col-sm-3 order-3'>
+        <p>profile section coming soon.</p>
+      </div> 
     </div>
   );
 }

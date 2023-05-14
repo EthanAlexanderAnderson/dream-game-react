@@ -17,14 +17,39 @@ img {
     height: 600px;
 }
 
-/* default styles for mobile devices */
+#messageBox {
+    color: #EEEEEE;
+    background-color: #333333;
+}
+
+#messageBox > ul {
+    list-style-type: none;
+    text-align: left;
+    padding: 0;
+}
+
+li {
+    white-space: pre-wrap;
+}
+
 .App {
+    margin-top: 20px;
     width: 80%;
 }
 
-/* styles for desktop devices */
-@media (min-width: 768px) {
+.message {
+    width: 100%;
+}
+
+/* Mobile and smaller */
+@media (max-width: 991.98px) {  
+    .message {
+        width: 100%;
+    }
     .App {
-        width: 50%;
+        width: 100%;
+    }
+    #imageSection {
+        height: 100%;
     }
 }
