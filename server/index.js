@@ -132,11 +132,21 @@ async function fetch(key) {
 }
 var dream = "";
 var dreamer = "";
+var buffer = [];
 async function updateRandomDream(type, socket){
     if (type === "new") {
         await fetch("&dreamcount");
         let count = parseInt(redisResult);
+        // generate random dream unseen for 100 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
+        while (buffer.includes(rng)) {
+            rng = Math.floor(Math.random() * Math.floor(count));
+        }
+        buffer.push(rng);
+        if (buffer.length > 100) {
+            buffer.shift();
+        }
+        console.log("Buffer: " + buffer);
         await fetch("&dream"+rng);
         dream = redisResult;
         await fetch("&dreamer"+rng);
