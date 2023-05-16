@@ -3,6 +3,18 @@ import React, { useRef } from "react";
 function MessageSection(props) {
     let link = "";
 
+    // max number of messages
+    let messages = props.messages.slice(-10);
+
+    //max number of charcters in message box
+    console.log(messages);
+    let sum = messages.reduce((acc, curr) => acc + curr.length, 0);
+    console.log(sum);
+    while (sum > 600) {
+        let removed = messages.shift();
+        sum -= removed.length;
+      }
+
     const inputRef = useRef(null);
 
     const handleSubmit = (event) => {
@@ -21,15 +33,15 @@ function MessageSection(props) {
 
                 <div id="messageBox" className="message">
                     <ul>
-                    {props.messages.map((item) => (
-                        <li key={item}>{item}</li>
+                    {messages.map((item, index) => (
+                        <li key={index}>{item}</li>
                     ))}
                     </ul>
                 </div>
             
                 <form className="message" onSubmit={handleSubmit}>
                     <input
-                    class="form-control"
+                    className="form-control"
                     type="text"
                     placeholder="Message..."
                     ref={inputRef}
