@@ -4,6 +4,7 @@ import ButtonSection from './buttonSection';
 import PlayerSection from './playerSection';
 import ImageSection from './imageSection';
 import MessageSection from './messageSection';
+import ProfileSection from './profileSection';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
@@ -112,7 +113,7 @@ function App() {
   return (
     <div className="App container row mx-auto">
       
-      <div className='col-sm-6  order-sm-2'>
+      <div className='col  order-sm-2'>
         <div id='textSection'>{textSection}</div>
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
 
@@ -124,9 +125,8 @@ function App() {
 
       <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
 
-      <div className='col-sm-3 order-3'>
-        <p>profile section coming soon.</p>
-      </div> 
+      <ProfileSection name={name} stats={stats}/>
+ 
     </div>
   );
 }
