@@ -32,6 +32,10 @@ li {
     white-space: pre-wrap;
 }
 
+.mod1 {
+    background-color: #444444;
+}
+
 .App {
     margin-top: 20px;
     width: 80%;

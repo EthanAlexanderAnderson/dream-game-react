@@ -34,7 +34,7 @@ function MessageSection(props) {
                 <div id="messageBox" className="message">
                     <ul>
                     {messages.map((item, index) => (
-                        <li key={index}>{item}</li>
+                        <li key={index} className={"mod"+index%2}>{item}</li>
                     ))}
                     </ul>
                 </div>
