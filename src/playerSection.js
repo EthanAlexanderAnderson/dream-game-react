@@ -42,14 +42,14 @@ function PlayerSection(props) {
                 <div id="playerSection">
                     <table className="table">
                         <thead>
-                            <tr>
-                                <th scope="col">Player</th>
-                                <th scope="col">Scores</th>
-                                <th scope="col">{colThree}</th>
+                            <tr key="Header Row">
+                                <th key="Player" scope="col">Player</th>
+                                <th key={"Scores"} scope="col">Scores</th>
+                                <th key={colThree} scope="col">{colThree}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {playerSection.map((item) => {
+                            {playerSection.map((item, index) => {
                                 // show score (default)
                                 let itemThree = item[3];
                                 if (props.status === "after") {
@@ -60,10 +60,10 @@ function PlayerSection(props) {
                                     itemThree = item[5];
                                 }
                                 return (
-                                <tr scope="row">
-                                    <td>{item[1]}</td>
-                                    <td>{item[2]}</td>
-                                    <td>{itemThree}</td>
+                                <tr key={item[1] + "Row"} scope="row">
+                                    <td key={item[1] + "name"}>{item[1]}</td>
+                                    <td key={item[1] + "score"}>{item[2]}</td>
+                                    <td key={item[1] + colThree }>{itemThree}</td>
                                 </tr>
                                 );
                             })}
