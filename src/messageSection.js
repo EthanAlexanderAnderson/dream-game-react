@@ -29,7 +29,7 @@ function MessageSection(props) {
 
     if (props.name !== "") {
         return (
-            <div id="messageSection" className='col-sm-3  order-md-1'>
+            <div id="messageSection" className='col-sm-3  order-sm-1'>
 
                 <div id="messageBox" className="message">
                     <ul>

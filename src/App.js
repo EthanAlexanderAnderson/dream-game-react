@@ -112,7 +112,7 @@ function App() {
   return (
     <div className="App container row mx-auto">
       
-      <div className='col-sm-6  order-md-2'>
+      <div className='col-sm-6  order-sm-2'>
         <div id='textSection'>{textSection}</div>
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
 
