@@ -45,7 +45,7 @@ function ButtonSection(props) {
             </div>
         );
     }
-    else {
+    else if (props.status === "before") {
         return(
             <div id="controlButtons">
                 <button onClick={() => props.start()}>Start</button>

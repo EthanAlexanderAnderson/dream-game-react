@@ -70,13 +70,14 @@ function App() {
   // when all players guessed
   const allGuessed = (answer) => {
     if (answer === myGuess) {
-      setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
+      setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("increment_score");
     } else {
-      setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
+      setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
     }
     setStatus("after");
     setImage("");
+    setTimeout(start, 5000);
   }
 
   const updateScores = (data) => {
