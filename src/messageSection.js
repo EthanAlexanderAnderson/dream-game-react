@@ -7,9 +7,7 @@ function MessageSection(props) {
     let messages = props.messages.slice(-10);
 
     //max number of charcters in message box
-    console.log(messages);
     let sum = messages.reduce((acc, curr) => acc + curr.length, 0);
-    console.log(sum);
     while (sum > 600) {
         let removed = messages.shift();
         sum -= removed.length;
@@ -19,7 +17,6 @@ function MessageSection(props) {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        console.log("dfgndifn: " + props.message)
         if (props.message) {
             props.sendMessage();
         }

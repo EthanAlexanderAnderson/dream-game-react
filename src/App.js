@@ -44,8 +44,6 @@ function App() {
   const guess = (data) => {
     myGuess = data;
     socket.emit("guess", myGuess);
-    console.log("guesser: " + name);
-    console.log("my guess: " + myGuess);
     setStatus("guessed");
   }
 
@@ -66,7 +64,6 @@ function App() {
   const getRandomDreamD = (data) => {
     setTextSection(data.dream);
     setStatus("during");
-    console.log("dreamer: " + data.dreamer);
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
   }
 
