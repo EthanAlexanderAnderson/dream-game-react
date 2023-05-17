@@ -120,6 +120,10 @@ io.on("connection", (socket) => {
         scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
         io.emit("update_scores", scores);
     });
+
+    socket.on("all_dreams", () => {
+        allDreams();
+    });
 });
 
 
@@ -166,6 +170,18 @@ async function updateStats() {
         stats.push(temp);
     }
     io.emit("update_stats", stats);
+}
+
+async function allDreams() {
+    console.log("Server all");
+    dream = "";
+    for (let i = 0; i < 544; i++) {
+        await fetch("&dream"+i);
+        dream = dream + i + ": " + redisResult + "\n";
+    }
+    dreamer = "all";
+    io.emit("get_random_dream_d", { dream, dreamer} );
+    console.log("Server all");
 }
 
 // GETTERS AND SETTERS FOR scores VARIABLE

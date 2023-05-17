@@ -88,6 +88,10 @@ function App() {
     setStats(data);
   }
 
+  const allDreams = () => {
+    socket.emit("all_dreams");
+  }
+
   // receive from socket
   useEffect(() => {
 
@@ -125,7 +129,9 @@ function App() {
 
       <ProfileSection name={name} stats={stats}/>
  
+      <button id="allDreams" onClick={() => allDreams()}>Admin - All Dreams</button>
     </div>
+
   );
 }
 
