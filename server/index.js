@@ -30,7 +30,7 @@ let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
 let scores = [];
-let stats = [];
+let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr ]
 let status = "before";
 
 // receiving socket stuff goes in this func
@@ -75,8 +75,15 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
-            // scores variable items: id, name, score, ready, guess
-            scores.push([socket.id, name, 0, "Waiting...", "null"]);
+            // scores variable items: id, name, score, ready, guess, streak
+            scores.push([socket.id, name, 0, "Waiting...", "null", 0]);
+            for (let s of stats) {
+                if (s[0] === name) {
+                    s.push(socket.id);
+                    
+                  break;
+                }
+              }
         }
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
@@ -116,7 +123,56 @@ io.on("connection", (socket) => {
         io.emit('receive_message', { message, name });
     });
 
-    socket.on("increment_score", () => {
+    socket.on("correct", (name) => {
+                
+        let statindex = -1;
+        let scoreindex = -1;
+        for (let i = 0; i < scores.length; i++) {
+            if (scores[i][1] === name) {
+                scoreindex = i;
+                break;
+            }
+        }
+        for (let i = 0; i < stats.length; i++) {
+            if (stats[i][0] === name) {
+                statindex = i;
+                break;
+            }
+        }
+
+        scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // score
+        stats = stats.map(subArr => subArr.map((el, i) => i === 1 && subArr[0] === name ? parseInt(el) + 1 : el)); // corr
+        scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // streak
+        console.log("if "+parseInt(scores[scoreindex][5])+" > "+parseInt(stats[statindex][3]));
+        if (parseInt(scores[scoreindex][5]) > parseInt(stats[statindex][3])) {
+            stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el)); // longest
+        }
+        io.emit("update_scores", scores);
+        io.emit("update_stats", stats);
+    });
+
+    socket.on("incorrect", (name) => {
+        let statindex = -1;
+        let scoreindex = -1;
+        for (let i = 0; i < scores.length; i++) {
+            if (scores[i][1] === name) {
+                scoreindex = i;
+                break;
+            }
+        }
+        for (let i = 0; i < stats.length; i++) {
+            if (stats[i][0] === name) {
+                statindex = i;
+                break;
+            }
+        }
+        stats = stats.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === name ? parseInt(el) + 1 : el)); // incor
+        scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // streak
+        io.emit("update_scores", scores);
+        io.emit("update_stats", stats);
+    });
+
+    socket.on("increment_score", (name) => {
         scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
         io.emit("update_scores", scores);
     });

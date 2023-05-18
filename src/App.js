@@ -71,9 +71,10 @@ function App() {
   const allGuessed = (answer) => {
     if (answer === myGuess) {
       setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
-      socket.emit("increment_score");
+      socket.emit("correct", name);
     } else {
       setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
+      socket.emit("incorrect", name);
     }
     setStatus("after");
     setImage("");
