@@ -60,7 +60,7 @@ function PlayerSection(props) {
                                     itemThree = item[5];
                                 }
                                 return (
-                                <tr key={item[1] + "Row"} scope="row">
+                                <tr key={item[1] + "Row"}>
                                     <td key={item[1] + "name"}>{item[1]}</td>
                                     <td key={item[1] + "score"}>{item[2]}</td>
                                     <td key={item[1] + colThree }>{itemThree}</td>

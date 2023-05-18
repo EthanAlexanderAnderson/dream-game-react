@@ -19,7 +19,7 @@ function App() {
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("before");
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState([]); 
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
 
@@ -103,6 +103,8 @@ function App() {
       socket.off("player_join_d");
       socket.off("get_random_dream_d");
       socket.off("all_guessed");
+      socket.off("update_scores");
+      socket.off("update_stats");
     };
 
   }, [socket]);
@@ -117,7 +119,7 @@ function App() {
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status}/>
 
-        <ImageSection image={image}/>
+        <ImageSection image={image} status={status}/>
 
       </div>
 

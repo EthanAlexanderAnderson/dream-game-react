@@ -8,10 +8,10 @@ function ImageSection(props) {
         link = "https://image.pollinations.ai/prompt/"+props.image;
     }
     
-    return (
+    if (props.status === "during") {return (
         <div id="imageSection">
             <img src={link} alt="" className="img-fluid"></img>
         </div>
-    );
+    );}
 };
 export default ImageSection;
