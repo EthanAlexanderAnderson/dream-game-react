@@ -10,7 +10,7 @@ function ProfileSection(props) {
             
             let correct  = parseInt(props.stats[i][1]);
             let incorrect = parseInt(props.stats[i][2]);
-            let ratio = ((correct/(incorrect+correct+0.001))*100).toFixed(2);
+            let ratio = ((correct/(incorrect+correct+0.00001))*100).toFixed(2);
             let longestStreak = parseInt(props.stats[i][3]);
             let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
             let correctMemory  = parseInt(props.stats[i][5]);

@@ -9,7 +9,7 @@ function PlayerSection(props) {
             if (props.scores[i][1] === props.stats[j][0]){
                 let correct  = parseInt(props.stats[j][1]);
                 let incorrect = parseInt(props.stats[j][2]);
-                let ratio = ((correct/(incorrect+correct+0.001))*100).toFixed(2);
+                let ratio = ((correct/(incorrect+correct+0.00001))*100).toFixed(2);
                 let longestStreak = parseInt(props.stats[j][3]);
                 let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
                 let temp = props.scores[i];
