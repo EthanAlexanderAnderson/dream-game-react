@@ -2,42 +2,28 @@ import React from "react";
 
 function PlayerSection(props) {
 
-    // TODO: clean this mess
-    let playerSection = [];
-    for (let i = 0; i < props.scores.length; i++) {
-        for (let j = 0; j < props.stats.length; j++) {
-            if (props.scores[i][1] === props.stats[j][0]){
-                let correct  = parseInt(props.stats[j][1]);
-                let incorrect = parseInt(props.stats[j][2]);
-                let ratio = ((correct/(incorrect+correct+0.001))*100).toFixed(2);
-                let longestStreak = parseInt(props.stats[j][3]);
-                let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
-                let temp = props.scores[i];
-                temp[5] = skillRating;
-                playerSection.push(temp);
-            }
-        }
-    }
-
+    let records = props.records.filter(subarray => subarray[3] !== 'null');
+    let status = props.status;
     let colThree = "";
-    if (props.status === "before") {
+
+    if (status === "before") {
         colThree = "Skill Rating"
         // sort by skill rating
-        playerSection.sort((a, b) => b[5] - a[5]);
-    } else if (props.status === "during") {
+        records.sort((a, b) => b[11] - a[11]);
+    } else if (status === "during") {
         colThree = "Status"
         // sort by score
-        playerSection.sort((a, b) => b[2] - a[2]);
-    } else if (props.status === "after") {
+        records.sort((a, b) => b[1] - a[1]);
+    } else if (status === "after") {
         colThree = "Guessed"
         // sort by score
-        playerSection.sort((a, b) => b[2] - a[2]);
+        records.sort((a, b) => b[1] - a[1]);
     } else {
         colThree = "Status"
     }
 
     if (!(props.name === "")){
-        if (Array.isArray(playerSection)) { 
+        if (Array.isArray(records)) { 
             return (
                 <div id="playerSection">
                     <table className="table">
@@ -49,21 +35,22 @@ function PlayerSection(props) {
                             </tr>
                         </thead>
                         <tbody>
-                            {playerSection.map((item, index) => {
-                                // show score (default)
+                            {records.map((item, index) => {
+                                // show status (default)
+                                //console.log(records);
                                 let itemThree = item[3];
-                                if (props.status === "after") {
-                                    // show status
+                                if (status === "after") {
+                                    // show guessed
                                     itemThree = item[4];
-                                } else if (props.status === "before") {
+                                } else if (status === "before") {
                                     // show skill rating
-                                    itemThree = item[5];
+                                    itemThree = item[11];
                                 }
                                 return (
-                                <tr key={item[1] + "Row"} scope="row">
-                                    <td key={item[1] + "name"}>{item[1]}</td>
-                                    <td key={item[1] + "score"}>{item[2]}</td>
-                                    <td key={item[1] + colThree }>{itemThree}</td>
+                                <tr key={item[0] + "Row"} scope="row">
+                                    <td key={item[0] + "name"}>{item[0]}</td>
+                                    <td key={item[0] + "score"}>{item[1]}</td>
+                                    <td key={item[0] + colThree }>{itemThree}</td>
                                 </tr>
                                 );
                             })}
@@ -72,7 +59,7 @@ function PlayerSection(props) {
                 </div>
             );
         } else {
-            return(<p>ERROR: SCORES NOT ARRAY</p>);
+            return(<p>ERROR: RECORDS NOT ARRAY</p>);
         }
     }
 };

@@ -25,24 +25,27 @@ server.listen(process.env.PORT || 3001, () => {
 // ---------- End of restricted section ----------
 
 // dreamgame variables
-var names = ["Ethan", "Nathan", "Cole", "Max", "Devon", "Oobie", "Eric", "Dylan", "Adam", "Mitch", "Jack", "Zach", "Devo", "Eddie"]
+const names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Max", "Mitch", "Adam", "Eric", "Dylan", "Devo", "Jack", "Zach"]
+const recordIndex = new Map();
 let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
-let scores = [];
-let stats = [];
+let records = [];
+let corrects = [];
+
 let status = "before";
+
+
+initializeRecords();
+
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
 
-    updateStats();
 
     socket.on("disconnect", () => {
-        const name = scores.find(subarray => subarray[0] === socket.id);
-        if (Array.isArray(name)) {console.log(`User Disconnected: ${socket.id} ${name[1]}`);}
         // only decrease playercount if the user had selected a name
-        if (scores.some(item => item[0] === socket.id)){
+        if (recordIndex.has(socket.id)){
             playerCount--;
 
             if (getReady(socket) === "Ready") {
@@ -56,6 +59,8 @@ io.on("connection", (socket) => {
                 guessCount = 0;
                 status = "after";
             }
+
+            records[recordIndex.get(socket.id)][3] = 'null';
         }        
         if (playerCount <= 0){
             playerCount = 0;
@@ -63,23 +68,23 @@ io.on("connection", (socket) => {
         if (playerCount <= 0 || guessCount <= 0){
             guessCount = 0;
         }
-        scores = scores.filter(subArr => !subArr.includes(socket.id));
-        io.emit("update_scores", scores);
-        console.log("Player Count: " + playerCount)
-        console.log("Guess Count: " + guessCount);;
+        io.emit("update_records", records);
+        console.log("Player Count: " + playerCount + " Guess Count: " + guessCount)
       });
   
     // After new player selects their name
     socket.on("player_join", (name) => {
         console.log(`User Connected: ${socket.id} ${name}`);
-        socket.broadcast.emit("update_players", name);
-        if (!scores.some(item => item[1] === name)){
-            playerCount++;
-            // scores variable items: id, name, score, ready, guess
-            scores.push([socket.id, name, 0, "Waiting...", "null"]);
+        for (let i = 0; i < records.length; i++) {
+            if (name === records[i][0]) {
+                recordIndex.set(socket.id, i);
+                setReady(socket, "Waiting...");
+                playerCount++;
+                break;
+            }
         }
-        console.log("Player Count: " + playerCount);
-        io.emit("update_scores", scores);
+        console.log("Player Count: " + playerCount + " Guess Count: " + guessCount)
+        io.emit("update_records", records);
     });
 
     // After new player selects their name
@@ -89,25 +94,53 @@ io.on("connection", (socket) => {
             updateRandomDream("new", socket);
             status = "during";
             setReady("all", "Waiting...");
-            io.emit("update_scores", scores);
+            //io.emit("update_records", records);
         } else {
             updateRandomDream("refresh", socket);
         }
     });
 
-    socket.on("guess", (guess) => { 
-        console.log("server side recieved guess of:" + guess + "  From guesser: " + getName(socket));
+    socket.on("guess", (guess) => {
         guessCount++;
-        console.log("Guess Count: " + guessCount); 
+        let index = recordIndex.get(socket.id);
+        let name = getName(socket);
+         
+        console.log("server side recieved guess of:" + guess + "  From guesser: " + name);
+        console.log("Player Count: " + playerCount + " Guess Count: " + guessCount) 
         setReady(socket, "Ready");
         setGuess(socket, guess);
-        io.emit("update_scores", scores);
+        // TODO stop this from showing score / stats before round over
+        //socket.emit("update_records", records);
+        //io.emit("update_records", records);
+
+        // curr streak
+        if (guess === dreamer){ 
+            records[index][2]++;
+        } else {
+            records[index][2] = 0;
+        }
+        //io.emit("ready_up", index);
+        
         if (guessCount === playerCount){
+            // we use curr streak to set scores since it's not visible during round
+            // TODO this works buuuut lags by one update
+            for (let record in records) {
+                if (record[3] != 'null'){
+                    if (record[2] > 0){
+                        record[1]++;
+                        record[5]++;
+                    } else {
+                        record[6]++;
+                    }
+                }
+            }
             console.log("Server side all guessed. Dreamer: "+ dreamer);
+            //io.emit("update_records", records);
             io.emit("all_guessed", dreamer);
             guessCount = 0;
             status = "after";
         }
+        io.emit("update_records", records);
     });
 
     socket.on("send_message", (data) => {
@@ -117,8 +150,7 @@ io.on("connection", (socket) => {
     });
 
     socket.on("increment_score", () => {
-        scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
-        io.emit("update_scores", scores);
+        incrementScore(socket);
     });
 });
 
@@ -157,71 +189,87 @@ async function updateRandomDream(type, socket){
     }
 }
 
-async function updateStats() {
-    stats = [];
+async function initializeRecords() {
     for (let n of names) {
+        let temp = [n, 0, 0, "null", "null"]
         await fetch("%" + n);
-        let temp = redisResult.split(",")
-        temp.unshift(n)
-        stats.push(temp);
+        records.push([...temp, ...redisResult.split(",").map(Number), 0, 0, 0]);
+        calcStats(names.indexOf(n));
     }
-    io.emit("update_stats", stats);
+    io.emit("update_records", records);
+    //console.log(records);
 }
 
-// GETTERS AND SETTERS FOR scores VARIABLE
+function calcStats(i) {
+    let correct  = parseInt(records[i][5]);
+    let incorrect = parseInt(records[i][6]);
+    let ratio = ((correct/(incorrect+correct+0.001))*100).toFixed(2);
+    let longestStreak = parseInt(records[i][7]);
+    let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
+    let correctMemory  = parseInt(records[i][9]);
+    let incorrectMemory = parseInt(records[i][10]);
+    let memory = ((correctMemory/(correctMemory+incorrectMemory+0.001))*100).toFixed(2);
+
+    records[i][11] = parseInt(skillRating);
+    records[i][12] = parseInt(ratio);
+    records[i][13] = parseInt(memory);
+}
+
+// GETTERS AND SETTERS FOR records VARIABLE
 
 function getName(socket) {
-    const name = scores.find(subarray => subarray[0] === socket.id);
-    if (Array.isArray(name)) {
-        return name[1];
-    }
+    return records[recordIndex.get(socket.id)][0];
 }
 
 function getScore(socket) {
-    const name = scores.find(subarray => subarray[0] === socket.id);
-    if (Array.isArray(name)) {
-        return name[2];
-    }
+    return records[recordIndex.get(socket.id)][1];
 }
+
+function getStreak(socket) {
+    return records[recordIndex.get(socket.id)][2];
+}
+
 function getReady(socket) {
-    const name = scores.find(subarray => subarray[0] === socket.id);
-    if (Array.isArray(name)) {
-        return name[3];
-    }
+    return records[recordIndex.get(socket.id)][3];
 }
 
 function getGuess(socket) {
-    const name = scores.find(subarray => subarray[0] === socket.id);
-    if (Array.isArray(name)) {
-        return name[4];
-    }
+    return records[recordIndex.get(socket.id)][4];
 }
 
 function setReady(socket, value) {
     if (socket === "all"){
-        for (let i = 0; i < scores.length; i++) {
-            scores[i][3] = value;
-        }
-    } else {
-        for (let i = 0; i < scores.length; i++) {
-            if (scores[i][0] === socket.id) {
-                scores[i][3] = value;
+        for (let i = 0; i < records.length; i++) {
+            if (records[i][3] != 'null') {
+                records[i][3] = value;
             }
         }
+    } else {
+        records[recordIndex.get(socket.id)][3] = value;
     }
 }
 
 function setGuess(socket, value) {
     if (socket === "all"){
-        for (let i = 0; i < scores.length; i++) {
-            scores[i][4] = value;
+        for (let i = 0; i < records.length; i++) {
+            records[i][4] = value;
         }
     } else {
-        for (let i = 0; i < scores.length; i++) {
-            if (scores[i][0] === socket.id) {
-                scores[i][4] = value;
-            }
-        }
+        records[recordIndex.get(socket.id)][4] = value;
+    }
+}
+
+// different from correct for bonus point purpose
+function incrementScore(socket) {
+    return records[recordIndex.get(socket.id)][1]++;
+}
+
+function correct(socket) {
+    let i = recordIndex.get(socket.id);
+    // increment streak and set longest streak
+    records[i][2]++;
+    if (records[i][7] < records[i][2]) {
+        records[i][7] = records[i][2];
     }
 }
 
@@ -244,4 +292,44 @@ set = set variable in server
 update = server to client
 send = client to server
 request = client to sever expecting a return update
+
+varaibles old
+scores : id, name, score, ready, guess, streak
+stats : name, corr, incorr, longeststreak, gnomecount, memory corr, memory incorr
+
+restruct
+big record 2d array:
+[ [name, score, curr streak, ready, guess, corr, incorr, longeststreak, gnomecount, memory corr, memory incorr, ratio, skill rating, memory ratio] ]
+[ [ 0  ,   1  ,      2     ,   3  ,   4  ,   5 ,    6  ,       7      ,      8    ,      9     ,       10     ,   11 ,       12            13    ] ]
+record index map
+{ socket.id : record index }
+use dictionary to get index
+then use getRecord to get the record with index 0 being name
+
+
+
+    socket.on("correct", () => {
+        scores.forEach(subarray => {
+            if (subarray[0] === socket.id) {
+                subarray[1]++;
+                subarray[5]++;
+            }
+        });
+        stats.forEach(subarray => {
+            if (subarray[0] === getName(socket.id)) {
+                subarray[1]++;
+            }
+        });
+        io.emit("update_records", records);
+    });
+
+    socket.on("correct", () => {
+        scores.forEach(subarray => {
+            if (subarray[0] === socket.id) {
+                subarray[1]++;
+                subarray[5]++;
+            }
+        });
+        io.emit("update_records", records);
+    });
 */

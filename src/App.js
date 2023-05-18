@@ -19,9 +19,7 @@ function App() {
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("before");
-  const [players, setPlayers] = useState([]);
-  const [scores, setScores] = useState([]);
-  const [stats, setStats] = useState([]);
+  const [records, setRecords] = useState([]);
 
   // player come online
   const playerJoin = (name) => {
@@ -29,8 +27,6 @@ function App() {
     socket = io.connect(URL);
     // set name on user
     setName(name);
-    // update player list on user
-    setPlayers(previous => [...previous, name])
     // update player list on peers
     socket.emit("player_join", name);
   };
@@ -57,10 +53,6 @@ function App() {
     setMessages(previous => [...previous, (data.name + ": " + data.message)]);
   }
 
-  const updatePlayers = (data) => {
-    setPlayers(previous => [...previous, data.data])
-  }
-
   const getRandomDreamD = (data) => {
     setTextSection(data.dream);
     setStatus("during");
@@ -80,29 +72,38 @@ function App() {
     setTimeout(start, 5000);
   }
 
-  const updateScores = (data) => {
-    setScores(data);
+  const updateRecords = (data) => {
+    console.log("request recieved to update records length: " + data.length);
+    setRecords(data);
   }
 
-  const updateStats = (data) => {
-    setStats(data);
-  }
+  /*
+  const changeFirstIndex = (arr, newValue) => (arr[0][0] = newValue, arr);
+
+  const readyUp = (index) => {
+    console.log(index);
+    let newValue = "Ready";
+    changeFirstIndex(records, 9);
+    //temp[index][3] = newValue;
+    //setRecords((records, newValue) => (records[index][3] = newValue, records));
+    console.log(records);
+  }*/
 
   // receive from socket
   useEffect(() => {
 
     socket.on("receive_message", receiveMessage);
-    socket.on("update_players", updatePlayers);
     socket.on("get_random_dream_d", getRandomDreamD);
     socket.on("all_guessed", allGuessed);
-    socket.on("update_scores", updateScores);
-    socket.on("update_stats", updateStats);
+    socket.on("update_records", updateRecords);
+    //socket.on("ready_up", readyUp);
 
     return () => {
       socket.off("receive_message");
-      socket.off("player_join_d");
       socket.off("get_random_dream_d");
       socket.off("all_guessed");
+      socket.off("update_records");
+
     };
 
   }, [socket]);
@@ -115,15 +116,15 @@ function App() {
         <div id='textSection'>{textSection}</div>
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
 
-        <PlayerSection name={name} scores={scores} stats={stats} status={status}/>
+        <PlayerSection name={name} records={records} status={status}/>
 
-        <ImageSection image={image}/>
+        <ImageSection image={image} status={status}/>
 
       </div>
 
       <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
 
-      <ProfileSection name={name} stats={stats}/>
+      <ProfileSection name={name} records={records}/>
  
     </div>
   );
