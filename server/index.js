@@ -200,11 +200,15 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Early Bird", 1]]) : el));
         }
         // irony bonus 
-        if (scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][5] <= 0) {
+        if (scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][4] !== dreamer) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Irony", 1]]) : el));
         }
-
+        // lone wolf bonus
+        if (scores.every(subArr => scores[dreamerindex][4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Lone Wolf", 1]]) : el));
+        }
         io.emit("update_scores", scores);
     });
 
