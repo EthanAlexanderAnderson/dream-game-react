@@ -205,7 +205,7 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Irony", 1]]) : el));
         }
         // lone wolf bonus
-        if (scores.every(subArr => scores[dreamerindex][4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
+        if (scores.every(subArr => subArr[4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Lone Wolf", 1]]) : el));
         }
@@ -235,8 +235,13 @@ io.on("connection", (socket) => {
         // BONUSES
         // reset streak
         if (scores[scoreindex][5] > 0) {
-            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // streak
-        } else { // streaks broken needs to go here eventually
+            if (scores[scoreindex][5] >= 5) {
+        // streak breaker bonus
+                scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[4] === dreamer ? (parseInt(el) + 1) : el));
+                scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[4] === dreamer ? el.concat([["Streak Breaker", 1]]) : el));
+            }
+            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
+        } else {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? (parseInt(el) - 1) : el)); // streak
             if (scores[scoreindex][5] <= -5) {
         // biggest loser bonus
