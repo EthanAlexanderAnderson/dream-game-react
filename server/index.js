@@ -36,6 +36,7 @@ let bottomFeeder = {
     name: "",
     streak: 0
   };
+let earlyBird = "";
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
@@ -114,6 +115,9 @@ io.on("connection", (socket) => {
         setGuess(socket, guess);
         scores = scores.map(subArr => subArr.map((el, i) => i === 6 && subArr[0] === socket.id ? subArr[2] : el)); // scorePrev
         io.emit("update_scores", scores);
+        if (guessCount <= 1){
+            earlyBird = getName(socket);
+        }
         if (guessCount === playerCount){
             console.log("Server side all guessed. Dreamer: "+ dreamer);
             io.emit("all_guessed", dreamer);
@@ -174,6 +178,11 @@ io.on("connection", (socket) => {
         if (name === bottomFeeder.name && bottomFeeder.streak >= 5){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // bottom feeder
         }
+
+        if (name === earlyBird && playerCount > 2) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // early bird
+        }
+        console.log("name: " + name + "   EB: " + earlyBird);
 
         io.emit("update_scores", scores);
         io.emit("update_stats", stats);
