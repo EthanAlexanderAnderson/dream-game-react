@@ -140,10 +140,10 @@ io.on("connection", (socket) => {
                 break;
             }
         }
-        
+
+        scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // streak
         scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1 + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el)); // score + streak bonus
         stats = stats.map(subArr => subArr.map((el, i) => i === 1 && subArr[0] === name ? parseInt(el) + 1 : el)); // corr
-        scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // streak
 
         if (parseInt(scores[scoreindex][5]) > parseInt(stats[statindex][3])) {
             stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el)); // longest
