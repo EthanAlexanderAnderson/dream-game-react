@@ -179,10 +179,9 @@ io.on("connection", (socket) => {
             stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el)); // longest
         }
 
-        if (name === bottomFeeder.name && bottomFeeder.streak >= 5){
-            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // bottom feeder
-            // TODO add bottom feeder multiplier
-            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", 1]]) : el));
+        if (name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0)){
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el)); // bottom feeder
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
 
         if (name === earlyBird && playerCount > 2) {
@@ -219,6 +218,10 @@ io.on("connection", (socket) => {
                 scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
                 scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Biggest Loser", 1]]) : el));
             }
+        }
+        if (name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0)){
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el)); // bottom feeder
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
         io.emit("update_scores", scores);
         io.emit("update_stats", stats);

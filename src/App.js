@@ -78,7 +78,7 @@ function App() {
     }
     setStatus("after");
     setImage("");
-    setTimeout(start, 5000);
+    setTimeout(start, 1000);
   }
 
   const updateScores = (data) => {
