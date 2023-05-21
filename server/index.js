@@ -151,10 +151,14 @@ io.on("connection", (socket) => {
                 
         let statindex = -1;
         let scoreindex = -1;
+        let dreamerindex = -1;
         for (let i = 0; i < scores.length; i++) {
             if (scores[i][1] === name) {
                 scoreindex = i;
-                break;
+                
+            }
+            if (scores[i][1] === dreamer) {
+                dreamerindex = i;
             }
         }
         for (let i = 0; i < stats.length; i++) {
@@ -194,6 +198,11 @@ io.on("connection", (socket) => {
         if (name === earlyBird && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Early Bird", 1]]) : el));
+        }
+        // irony bonus 
+        if (scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][5] <= 0) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Irony", 1]]) : el));
         }
 
         io.emit("update_scores", scores);
