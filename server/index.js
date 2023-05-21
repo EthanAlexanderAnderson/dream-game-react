@@ -184,6 +184,20 @@ io.on("connection", (socket) => {
         io.emit("update_stats", stats);
 
         // BONUSES 
+        // underdog bonus 
+        let underdogData = scores.sort((a, b) => b[2] - a[2]);
+        let underdogCount = 0;
+        for (let i = 0; i < underdogData.length; i++) {
+            if ( underdogData[i][4] !== dreamer ) {
+                underdogCount++;
+            } else{
+                break;
+            }
+        }
+        if (underdogCount > 0) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + underdogCount) : el));
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Underdog x"+underdogCount, underdogCount]]) : el));
+        }
         // streak bonus
         if (scores[scoreindex][5] >= 5) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el));
