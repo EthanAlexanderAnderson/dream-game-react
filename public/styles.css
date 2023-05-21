@@ -45,6 +45,12 @@ li {
     width: 100%;
 }
 
+.scoreDiff {
+ color: green;
+ vertical-align: super;
+}
+
+
 /* Mobile and smaller */
 @media (max-width: 991.98px) {  
     .message {

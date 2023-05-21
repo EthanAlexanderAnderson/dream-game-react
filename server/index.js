@@ -75,8 +75,8 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
-            // scores variable items: id, name, score, ready, guess, streak
-            scores.push([socket.id, name, 0, "Waiting...", "null", 0]);
+            // scores variable items: id, name, score, ready, guess, streak, scorePrev
+            scores.push([socket.id, name, 0, "Waiting...", "null", 0, 0]);
             for (let s of stats) {
                 if (s[0] === name) {
                     s.push(socket.id);
@@ -108,6 +108,7 @@ io.on("connection", (socket) => {
         console.log("Guess Count: " + guessCount); 
         setReady(socket, "Ready");
         setGuess(socket, guess);
+        scores = scores.map(subArr => subArr.map((el, i) => i === 6 && subArr[0] === socket.id ? subArr[2] : el)); // scorePrev
         io.emit("update_scores", scores);
         if (guessCount === playerCount){
             console.log("Server side all guessed. Dreamer: "+ dreamer);

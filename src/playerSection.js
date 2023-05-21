@@ -50,10 +50,10 @@ function PlayerSection(props) {
                         </thead>
                         <tbody>
                             {playerSection.map((item, index) => {
-                                // show score (default)
+                                // show ready (default)
                                 let itemThree = item[3];
                                 if (props.status === "after") {
-                                    // show status
+                                    // show guess
                                     itemThree = item[4];
                                 } else if (props.status === "before") {
                                     // show skill rating
@@ -62,7 +62,7 @@ function PlayerSection(props) {
                                 return (
                                 <tr key={item[1] + "Row"}>
                                     <td key={item[1] + "name"}>{item[1]}</td>
-                                    <td key={item[1] + "score"}>{item[2]}</td>
+                                    <td key={item[1] + "score"}>{item[2]} {((item[2] - item[6]) !== 0 && props.status === "after") ? <span className="scoreDiff">+{item[2] - item[6]}</span> : null}</td>
                                     <td key={item[1] + colThree }>{itemThree}</td>
                                 </tr>
                                 );
