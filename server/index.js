@@ -133,7 +133,7 @@ io.on("connection", (socket) => {
                 bottomFeeder.name = minSubarray[1];
                 bottomFeeder.streak = 1;
             }
-            console.log(bottomFeeder);
+            console.log(scores);
         }
     });
 
@@ -160,6 +160,9 @@ io.on("connection", (socket) => {
             }
         }
 
+        if (scores[scoreindex][5] <= 0) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // let negative streak to 0
+        }
         scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // streak
         scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1 + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el)); // score + streak bonus
         stats = stats.map(subArr => subArr.map((el, i) => i === 1 && subArr[0] === name ? parseInt(el) + 1 : el)); // corr
@@ -192,7 +195,15 @@ io.on("connection", (socket) => {
             }
         }
         stats = stats.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === name ? parseInt(el) + 1 : el)); // incor
-        scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // streak
+        if (scores[scoreindex][5] > 0) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // streak
+        } else { // streaks broken needs to go here eventually
+            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? (parseInt(el) - 1) : el)); // streak
+            if (scores[scoreindex][5] <= -5) {
+                scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // biggest loser
+                scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
+            }
+        }
         io.emit("update_scores", scores);
         io.emit("update_stats", stats);
     });
