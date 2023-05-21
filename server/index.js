@@ -194,7 +194,7 @@ io.on("connection", (socket) => {
                 break;
             }
         }
-        if (underdogCount > 0) {
+        if (underdogCount > 0 && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + underdogCount) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Underdog x"+underdogCount, underdogCount]]) : el));
         }
