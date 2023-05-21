@@ -32,6 +32,10 @@ let guessCount = 0;
 let scores = [];
 let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr ]
 let status = "before";
+let bottomFeeder = {
+    name: "",
+    streak: 0
+  };
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
@@ -115,6 +119,21 @@ io.on("connection", (socket) => {
             io.emit("all_guessed", dreamer);
             guessCount = 0;
             status = "after";
+
+            // bottom feeder
+            let minSubarray = scores[0];
+            for (let i = 1; i < scores.length; i++) {
+                if (scores[i][2] < minSubarray[2]) {
+                  minSubarray = scores[i];
+                }
+            }
+            if (bottomFeeder.name === minSubarray[1]) {
+                bottomFeeder.streak++;
+            } else {
+                bottomFeeder.name = minSubarray[1];
+                bottomFeeder.streak = 1;
+            }
+            console.log(bottomFeeder);
         }
     });
 
@@ -148,6 +167,11 @@ io.on("connection", (socket) => {
         if (parseInt(scores[scoreindex][5]) > parseInt(stats[statindex][3])) {
             stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el)); // longest
         }
+
+        if (name === bottomFeeder.name && bottomFeeder.streak >= 5){
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // bottom feeder
+        }
+
         io.emit("update_scores", scores);
         io.emit("update_stats", stats);
     });
