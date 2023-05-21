@@ -50,6 +50,10 @@ li {
  vertical-align: super;
 }
 
+.bonus {
+    color: green;
+    font-size: 0.8em;
+}
 
 /* Mobile and smaller */
 @media (max-width: 991.98px) {  

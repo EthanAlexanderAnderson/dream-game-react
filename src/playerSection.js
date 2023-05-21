@@ -52,17 +52,23 @@ function PlayerSection(props) {
                             {playerSection.map((item, index) => {
                                 // show ready (default)
                                 let itemThree = item[3];
+                                let scoreDiff = "";
+                                let bonusArray = "";
                                 if (props.status === "after") {
                                     // show guess
                                     itemThree = item[4];
+                                    // set score and bonus info
+                                    scoreDiff = ((item[2] - item[6]) !== 0) ? <span className="scoreDiff">+{item[2] - item[6]}</span> : null
+                                    bonusArray = item[7].map((bonus, index) => <div key={bonus[0]+item[1]} className="bonus">{bonus[0]} +{bonus[1]}</div>)
                                 } else if (props.status === "before") {
                                     // show skill rating
                                     itemThree = item[5];
                                 }
+
                                 return (
                                 <tr key={item[1] + "Row"}>
                                     <td key={item[1] + "name"}>{item[1]}</td>
-                                    <td key={item[1] + "score"}>{item[2]} {((item[2] - item[6]) !== 0 && props.status === "after") ? <span className="scoreDiff">+{item[2] - item[6]}</span> : null}</td>
+                                    <td key={item[1] + "score"}>{item[2]} {scoreDiff} {bonusArray}</td>
                                     <td key={item[1] + colThree }>{itemThree}</td>
                                 </tr>
                                 );

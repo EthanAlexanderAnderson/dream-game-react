@@ -80,8 +80,8 @@ io.on("connection", (socket) => {
         socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
             playerCount++;
-            // scores variable items: id, name, score, ready, guess, streak, scorePrev
-            scores.push([socket.id, name, 0, "Waiting...", "null", 0, 0]);
+            // scores variable items: id, name, score, ready, guess, streak, scorePrev, bonus Array
+            scores.push([socket.id, name, 0, "Waiting...", "null", 0, 0, []]);
             for (let s of stats) {
                 if (s[0] === name) {
                     s.push(socket.id);
@@ -101,6 +101,7 @@ io.on("connection", (socket) => {
             updateRandomDream("new", socket);
             status = "during";
             setReady("all", "Waiting...");
+            clearBonus();
             io.emit("update_scores", scores);
         } else {
             updateRandomDream("refresh", socket);
@@ -137,7 +138,6 @@ io.on("connection", (socket) => {
                 bottomFeeder.name = minSubarray[1];
                 bottomFeeder.streak = 1;
             }
-            console.log(scores);
         }
     });
 
@@ -169,6 +169,10 @@ io.on("connection", (socket) => {
         }
         scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // streak
         scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1 + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el)); // score + streak bonus
+        // add streak to players bonus array
+        if (scores[scoreindex][5] >= 5) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Streak x"+scores[scoreindex][5], (Math.floor(parseInt(scores[scoreindex][5])/5))]]) : el));
+        }
         stats = stats.map(subArr => subArr.map((el, i) => i === 1 && subArr[0] === name ? parseInt(el) + 1 : el)); // corr
 
         if (parseInt(scores[scoreindex][5]) > parseInt(stats[statindex][3])) {
@@ -177,12 +181,14 @@ io.on("connection", (socket) => {
 
         if (name === bottomFeeder.name && bottomFeeder.streak >= 5){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // bottom feeder
+            // TODO add bottom feeder multiplier
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", 1]]) : el));
         }
 
         if (name === earlyBird && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // early bird
+            scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Early Bird", 1]]) : el));
         }
-        console.log("name: " + name + "   EB: " + earlyBird);
 
         io.emit("update_scores", scores);
         io.emit("update_stats", stats);
@@ -211,6 +217,7 @@ io.on("connection", (socket) => {
             if (scores[scoreindex][5] <= -5) {
                 scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el)); // biggest loser
                 scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
+                scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Biggest Loser", 1]]) : el));
             }
         }
         io.emit("update_scores", scores);
@@ -323,6 +330,12 @@ function setGuess(socket, value) {
                 scores[i][4] = value;
             }
         }
+    }
+}
+
+function clearBonus() {
+    for (let i = 0; i < scores.length; i++) {
+        scores[i][7] = [];
     }
 }
 
