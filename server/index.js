@@ -25,7 +25,7 @@ server.listen(process.env.PORT || 3001, () => {
 // ---------- End of restricted section ----------
 
 // dreamgame variables
-var names = ["Ethan", "Nathan", "Cole", "Max", "Devon", "Oobie", "Eric", "Dylan", "Adam", "Mitch", "Jack", "Zach", "Devo", "Eddie"]
+var names = ["Ethan", "Nathan", "Cole", "Max", "Devon", "Oobie", "Eric", "Dylan", "Adam", "Mitch", "Jack", "Zach", "Devo"]
 let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
@@ -37,6 +37,7 @@ let bottomFeeder = {
     streak: 0
   };
 let earlyBird = "";
+let PFPs = [];
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
@@ -92,6 +93,7 @@ io.on("connection", (socket) => {
         }
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
+        updatePFPs();
     });
 
     // After new player selects their name
@@ -323,6 +325,15 @@ async function updateStats() {
         stats.push(temp);
     }
     io.emit("update_stats", stats);
+}
+
+async function updatePFPs() {
+    PFPs = []
+    for (let n of names) {
+        await fetch("$" + n);
+        PFPs.push([n, redisResult]);
+    }
+    io.emit("update_PFPs", PFPs);
 }
 
 // GETTERS AND SETTERS FOR scores VARIABLE

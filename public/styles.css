@@ -55,6 +55,14 @@ li {
     font-size: 0.8em;
 }
 
+.PFP {
+    position: relative;
+    height: 25x;
+    width: 25px;
+    margin-right: 10px;
+    top: -1px;
+}
+
 /* Mobile and smaller */
 @media (max-width: 991.98px) {  
     .message {

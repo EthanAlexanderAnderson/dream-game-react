@@ -24,6 +24,7 @@ function App() {
   const [players, setPlayers] = useState([]); 
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
+  const [PFPs, setPFPs] = useState([]);
 
   // player come online
   const playerJoin = (name) => {
@@ -92,6 +93,10 @@ function App() {
     setStats(data);
   }
 
+  const updatePFPs = (data) => {
+    setPFPs(data);
+  }
+
   // receive from socket
   useEffect(() => {
 
@@ -101,6 +106,7 @@ function App() {
     socket.on("all_guessed", allGuessed);
     socket.on("update_scores", updateScores);
     socket.on("update_stats", updateStats);
+    socket.on("update_PFPs", updatePFPs);
 
     return () => {
       socket.off("receive_message");
@@ -109,6 +115,7 @@ function App() {
       socket.off("all_guessed");
       socket.off("update_scores");
       socket.off("update_stats");
+      socket.off("update_PFPs");
     };
 
   }, [socket]);
@@ -121,7 +128,7 @@ function App() {
         <div id='textSection'>{textSection}</div>
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
 
-        <PlayerSection name={name} scores={scores} stats={stats} status={status}/>
+        <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 
         <ImageSection image={image} status={status}/>
 
