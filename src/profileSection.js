@@ -4,6 +4,13 @@ function ProfileSection(props) {
 
     let stats = [];
     let labels = ["Name: ", "Skill Rating: ", "Correct: ", "Incorrect: ", "Ratio: ", "Longest Streak: ", "Memory: ", "Gnome Count: "]
+    let PFP = "";
+
+    for (let i = 0; i < props.PFPs.length; i++) {
+        if (props.name === props.PFPs[i][0]) {
+            PFP = props.PFPs[i][1];
+        }
+    }
 
     for (let i = 0; i < props.stats.length; i++) {
         if (props.stats[i][0] === props.name){
@@ -32,6 +39,7 @@ function ProfileSection(props) {
         return (
             <div id="profileSection" className='col-sm-3 order-3'>
                 <p>STATS WILL NOT BE SAVED UNTIL THE END OF ALPHA TESTS</p>
+                <img className="profileImage" src={PFP}></img>
                 {stats.map((item, index) => (
                     <li key={index} className={"mod"+index%2}>{labels[index]}{item}</li>
                 ))}

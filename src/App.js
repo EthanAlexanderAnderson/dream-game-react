@@ -136,7 +136,7 @@ function App() {
 
       <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
 
-      <ProfileSection name={name} stats={stats}/>
+      <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
  
     </div>
   );

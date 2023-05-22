@@ -63,6 +63,12 @@ li {
     top: -1px;
 }
 
+.profileImage {
+    height: 200x;
+    width: 200px;
+    margin-bottom: 10px;
+}
+
 /* Mobile and smaller */
 @media (max-width: 991.98px) {  
     .message {
