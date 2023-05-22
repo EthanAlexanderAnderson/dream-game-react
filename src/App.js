@@ -10,6 +10,8 @@ const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
 
 var myGuess = "";
+// sound effects by AndreWharn
+const ping = new Audio('ping.mp3');
 
 function App() {
   // states
@@ -55,6 +57,7 @@ function App() {
   // socket handlers -----------
   const receiveMessage = (data) => {
     setMessages(previous => [...previous, (data.name + ": " + data.message)]);
+    ping.play();
   }
 
   const updatePlayers = (data) => {
