@@ -184,6 +184,9 @@ io.on("connection", (socket) => {
             stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el));
         }
         io.emit("update_stats", stats);
+        if (stats[statindex][0] === name) {
+            stats[statindex].shift();
+        }
         console.log(stats[statindex].join(","));
         client.set(("%"+name),stats[statindex].join(","));
 
