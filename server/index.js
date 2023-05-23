@@ -1,6 +1,6 @@
 // ---------- Don't touch this section ----------
 const redis = require("ioredis");
-const client = redis.createClient(os.environ['REDIS_URL']);
+const client = redis.createClient(process.env.REDIS_URL);
 const express = require("express");
 const app = express();
 const http = require("http");
