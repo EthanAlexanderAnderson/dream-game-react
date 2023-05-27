@@ -1,4 +1,6 @@
 // ---------- Don't touch this section ----------
+const dotenv = require("dotenv");
+dotenv.config();
 const redis = require("ioredis");
 const client = redis.createClient(process.env.REDIS_URL);
 const express = require("express");
