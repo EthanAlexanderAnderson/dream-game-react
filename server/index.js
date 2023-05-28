@@ -194,7 +194,7 @@ io.on("connection", (socket) => {
         let temp = []
         // remove socket id and name from database push
         if (stats[statindex][0] === name) {
-            temp = stats[statindex].slice(1, 6)
+            temp = stats[statindex].slice(1, 7)
         }
         // push to database
         client.set(("%"+name),temp.join(","));
@@ -260,7 +260,6 @@ io.on("connection", (socket) => {
             }
         }
         
-        console.log(scores);
         io.emit("update_scores", scores);
     });
 
