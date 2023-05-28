@@ -191,7 +191,6 @@ io.on("connection", (socket) => {
         stats = stats.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
         // wrap up stat stuff
         io.emit("update_stats", stats);
-        console.log(stats[statindex]);
         let temp = stats[statindex]
         // remove socket id and name from database push
         if (temp[stats.length-1] === socket.id) {
@@ -201,7 +200,6 @@ io.on("connection", (socket) => {
             temp.shift();
         }
         // push to database
-        console.log(stats[statindex]);
         client.set(("%"+name),temp.join(","));
 
         // BONUSES 
