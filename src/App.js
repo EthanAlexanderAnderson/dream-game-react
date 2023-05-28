@@ -152,23 +152,3 @@ function App() {
 }
 
 export default App;
-
-/*
-      <h1>Players:</h1>
-      <div>
-        {players.map(item => {
-          return <div>{item}</div>;
-        })}
-      </div>
-
-      <input 
-        placeholder="Message..." 
-        onChange={(event) => {
-          setMessage(event.target.value);
-        }}
-      />
-      <button onClick={sendMessage}> Send Message</button>
-
-      <h1>Message:</h1>
-      {messageReceived}
-*/
