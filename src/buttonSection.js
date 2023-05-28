@@ -1,54 +1,50 @@
 import React from "react";
 
-function ButtonSection(props) {
-    if (props.name === "" ){
+function ButtonSection({name, playerJoin, status, start, guess, disabled}) {
+    let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+    let classes = []
+
+    disabled.sort();
+    let j = 0;
+    for (let i = 0; i < 13; i++) {
+        if (disabled.length > 0 && i === disabled[j]) {
+            //disabled.includes  should go here
+            classes.push("btn btn-danger guessButton disabled")
+            j++;
+            console.log(j, disabled);
+        } else {
+            classes.push("btn btn-primary guessButton")
+        }
+    }
+
+    if (name === "" ){
         return (
             <div id="buttonSection">
                 <p>Welcome to Dream Game. Please select your name:</p>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Ethan")}>Ethan</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Cole")}>Cole</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Nathan")}>Nathan</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Oobie")}>Oobie</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Devon")}>Devon</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Max")}>Max</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Mitch")}>Mitch</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Adam")}>Adam</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Eric")}>Eric</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Dylan")}>Dylan</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Jack")}>Jack</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Devo")}>Devo</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.playerJoin("Zach")}>Zach</button>
+                {names.map((item, index) => (
+                    <button key={index} className={classes[index]} onClick={() => playerJoin(item)}>{item}</button>
+                ))}
             </div>
         );
-    } else if (props.status === "during") {
+    } else if (status === "during") {
         return(
             <div id="guessButtons">
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Ethan")}>Ethan</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Cole")}>Cole</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Nathan")}>Nathan</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Oobie")}>Oobie</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Devon")}>Devon</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Max")}>Max</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Mitch")}>Mitch</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Adam")}>Adam</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Eric")}>Eric</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Dylan")}>Dylan</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Jack")}>Jack</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Devo")}>Devo</button>
-                <button className="btn btn-primary guessButton" onClick={() => props.guess("Zach")}>Zach</button>
+                {names.map((item, index) => (
+                    <button key={index} className={classes[index]} onClick={() => guess(item)}>{item}</button>
+                ))}
             </div>
         );
-    }  else if (props.status === "guessed") {
+    }  else if (status === "guessed") {
         return(
             <div>
                 <p>Waiting for others to guess...</p>
             </div>
         );
     }
-    else if (props.status === "before") {
+    else if (status === "before") {
         return(
             <div id="controlButtons">
-                <button className="btn btn-light" onClick={() => props.start()}>Start</button>
+                <button className="btn btn-light" onClick={() => start()}>Start</button>
             </div>
         );
     }

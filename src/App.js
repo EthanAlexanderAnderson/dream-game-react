@@ -11,6 +11,8 @@ const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
 
 var myGuess = "";
+var answer = "";
+let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
 // sound effects by AndreWharn
 const ping = new Audio('ping.mp3');
 
@@ -27,6 +29,7 @@ function App() {
   const [stats, setStats] = useState([]);
   const [PFPs, setPFPs] = useState([]);
   const [timerTrigger, setTimerTrigger] = useState(false);
+  const [disabled, setDisabled] = useState([]);
 
   // player come online
   const playerJoin = (name) => {
@@ -79,6 +82,7 @@ function App() {
 
   // when all players guessed
   const allGuessed = (answer) => {
+    answer = answer;
     if (answer === myGuess) {
       setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("correct", name);
@@ -89,6 +93,7 @@ function App() {
     setStatus("after");
     setImage("");
     myGuess = "";
+    setDisabled([]);
     setTimeout(start, 5000);
   }
 
@@ -102,6 +107,14 @@ function App() {
 
   const updatePFPs = (data) => {
     setPFPs(data);
+  }
+
+  const disableRandomButton = () => {
+    let randomNumber = Math.floor(Math.random() * 13);
+    while (names[randomNumber] === answer || disabled.includes(randomNumber)) {
+      randomNumber = Math.floor(Math.random() * 13);
+    }
+    setDisabled(prevArray => [...prevArray, randomNumber]);
   }
 
   // receive from socket
@@ -133,9 +146,9 @@ function App() {
       
       <div className='col  order-sm-2'>
         <div id='textSection'>{textSection}</div>
-        <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
+        <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled}/>
 
-        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status}/>
+        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 
