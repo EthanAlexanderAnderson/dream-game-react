@@ -130,17 +130,19 @@ io.on("connection", (socket) => {
             status = "after";
 
             // bottom feeder
-            let minSubarray = scores[0];
-            for (let i = 1; i < scores.length; i++) {
-                if (scores[i][2] < minSubarray[2]) {
-                  minSubarray = scores[i];
+            if (playerCount > 1) {
+                let minSubarray = scores[0];
+                for (let i = 1; i < scores.length; i++) {
+                    if (scores[i][2] < minSubarray[2]) {
+                    minSubarray = scores[i];
+                    }
                 }
-            }
-            if (bottomFeeder.name === minSubarray[1]) {
-                bottomFeeder.streak++;
-            } else {
-                bottomFeeder.name = minSubarray[1];
-                bottomFeeder.streak = 1;
+                if (bottomFeeder.name === minSubarray[1]) {
+                    bottomFeeder.streak++;
+                } else {
+                    bottomFeeder.name = minSubarray[1];
+                    bottomFeeder.streak = 1;
+                }
             }
         }
     });
@@ -186,6 +188,7 @@ io.on("connection", (socket) => {
             stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el));
         }
         io.emit("update_stats", stats);
+        console.log(stats);
         let temp = stats[statindex].slice(0, -1);
         if (temp[0] === name) {
             temp.shift();
@@ -274,7 +277,7 @@ io.on("connection", (socket) => {
             }
         }
         // bottom feeder bonus
-        if (name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0)){
+        if (name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
