@@ -22,7 +22,7 @@ function ProfileSection(props) {
             let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
             let correctMemory  = parseInt(props.stats[i][5]);
             let incorrectMemory = parseInt(props.stats[i][6]);
-            let memory = ((correctMemory/(correctMemory+incorrectMemory+0.001))*100).toFixed(2);
+            let memory = ((correctMemory/(correctMemory+incorrectMemory+0.00001))*100).toFixed(2);
 
             stats.push(props.stats[i][0]);// name
             stats.push(skillRating);

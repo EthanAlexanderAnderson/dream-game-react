@@ -187,12 +187,21 @@ io.on("connection", (socket) => {
         if (parseInt(scores[scoreindex][5]) > parseInt(stats[statindex][3])) {
             stats = stats.map(subArr => subArr.map((el, i) => i === 3 && subArr[0] === name ? parseInt(stats[statindex][3]) + 1 : el));
         }
+        // memory correct
+        stats = stats.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
+        // wrap up stat stuff
         io.emit("update_stats", stats);
-        console.log(stats);
-        let temp = stats[statindex].slice(0, -1);
+        console.log(stats[statindex]);
+        let temp = stats[statindex]
+        // remove socket id and name from database push
+        if (temp[stats.length-1] === socket.id) {
+            temp.pop();
+        }
         if (temp[0] === name) {
             temp.shift();
         }
+        // push to database
+        console.log(stats[statindex]);
         client.set(("%"+name),temp.join(","));
 
         // BONUSES 
@@ -256,6 +265,8 @@ io.on("connection", (socket) => {
         // STATS
         // incorrect guesses stat
         stats = stats.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === name ? parseInt(el) + 1 : el));
+        // memory incorrect
+        stats = stats.map(subArr => subArr.map((el, i) => i === 6 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
         io.emit("update_stats", stats);
 
         // BONUSES
