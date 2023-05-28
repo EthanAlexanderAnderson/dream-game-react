@@ -75,7 +75,7 @@ function App() {
     setTextSection(data.dream);
     setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
-
+    answer = data.dreamer;
     myGuess = "";
     setTimerTrigger(true);
   }
@@ -115,6 +115,7 @@ function App() {
       randomNumber = Math.floor(Math.random() * 13);
     }
     setDisabled(prevArray => [...prevArray, randomNumber]);
+    setDisabled(prevArray => [...prevArray].sort((a, b) => a - b));
   }
 
   // receive from socket
