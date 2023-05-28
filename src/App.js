@@ -5,6 +5,7 @@ import PlayerSection from './playerSection';
 import ImageSection from './imageSection';
 import MessageSection from './messageSection';
 import ProfileSection from './profileSection';
+import Timer from './timer';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
@@ -25,6 +26,7 @@ function App() {
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
   const [PFPs, setPFPs] = useState([]);
+  const [timerTrigger, setTimerTrigger] = useState(false);
 
   // player come online
   const playerJoin = (name) => {
@@ -48,6 +50,7 @@ function App() {
     myGuess = data;
     socket.emit("guess", myGuess);
     setStatus("guessed");
+    setTimerTrigger(false);
   }
 
   // send message to socket
@@ -69,6 +72,9 @@ function App() {
     setTextSection(data.dream);
     setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
+
+    myGuess = "";
+    setTimerTrigger(true);
   }
 
   // when all players guessed
@@ -82,6 +88,7 @@ function App() {
     }
     setStatus("after");
     setImage("");
+    myGuess = "";
     setTimeout(start, 5000);
   }
 
@@ -127,6 +134,8 @@ function App() {
       <div className='col  order-sm-2'>
         <div id='textSection'>{textSection}</div>
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess}/>
+
+        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 
