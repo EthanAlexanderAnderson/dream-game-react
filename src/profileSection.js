@@ -39,7 +39,7 @@ function ProfileSection(props) {
         return (
             <div id="profileSection" className='col-sm-3 order-3'>
                 <div className="profileName">Profile: {props.name}</div>
-                <img className="profileImage" src={PFP}></img>
+                <img className="profileImage" alt="Large profile" src={PFP}></img>
                 {stats.map((item, index) => (
                     <li key={index} className={"mod"+index%2}>{labels[index]}{item}</li>
                 ))}
