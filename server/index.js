@@ -191,16 +191,14 @@ io.on("connection", (socket) => {
         stats = stats.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
         // wrap up stat stuff
         io.emit("update_stats", stats);
-        let temp = stats[statindex]
+        let temp = []
         // remove socket id and name from database push
-        if (temp[stats.length-1] === socket.id) {
-            temp.pop();
-        }
-        if (temp[0] === name) {
-            temp.shift();
+        if (stats[statindex][0] === name) {
+            temp = stats[statindex].slice(1, 6)
         }
         // push to database
         client.set(("%"+name),temp.join(","));
+        
 
         // BONUSES 
         // underdog bonus 
@@ -241,7 +239,28 @@ io.on("connection", (socket) => {
         if (scores.every(subArr => subArr[4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Lone Wolf", 1]]) : el));
+        // Non-conformist & Mixed Bag bonus
+            if (playerCount > 3){
+                let unique = [];
+                for (let i = 0; i < scores.length; i++) {
+                    if (!unique.includes(scores[i][4])) {
+                        unique.push(scores[i][4]);
+                    }
+                }
+                // Non-conformist bonus
+                if (unique.length == 2) {
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (playerCount-3)) : el));
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Non-conformist", (playerCount-3)]]) : el));
+                } 
+                // Mixed Bag bonus
+                else if (unique.length == playerCount) {
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (playerCount-3)) : el));
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Mixed Bag", (playerCount-3)]]) : el));
+                }
+            }
         }
+        
+        console.log(scores);
         io.emit("update_scores", scores);
     });
 
