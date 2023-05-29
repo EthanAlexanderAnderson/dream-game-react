@@ -41,6 +41,11 @@ img {
     border-radius: 1em;
 }
 
+#profileSectionHeader {
+    display: flex;
+    flex-direction: column;
+}
+
 li {
     white-space: pre-wrap;
 }
@@ -105,5 +110,19 @@ li {
     }
     #imageSection {
         height: 100%;
+    }
+}
+
+/* Mobile and smaller */
+@media (max-width: 576px) {  
+    #profileSectionHeader {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center;
+        justify-content: space-around;
+
+    }
+    .profileImage {
+        width: 30%;
     }
 }

@@ -38,8 +38,10 @@ function ProfileSection(props) {
     if (props.name !== "") {
         return (
             <div id="profileSection" className='col-sm-3 order-3'>
-                <div className="profileName">Profile: {props.name}</div>
-                <img className="profileImage" alt="Large profile" src={PFP}></img>
+                <div id="profileSectionHeader">
+                    <div className="profileName">Profile: {props.name}</div>
+                    <img className="profileImage" alt="Large profile" src={PFP}></img>
+                </div>
                 {stats.map((item, index) => (
                     <li key={index} className={"mod"+index%2}>{labels[index]}{item}</li>
                 ))}
