@@ -1,14 +1,18 @@
 import React from "react";
 
-function ImageSection(props) {
+function ImageSection({image, status}) {
     let link = "";
-    if (props.image.includes("https")) {
-        link = props.image.split("_").find(substring => substring.startsWith("https"));
-    } else {
-        link = "https://image.pollinations.ai/prompt/"+props.image;
+    // if dream contains an image link, display that image
+    if (image.includes("https")) {
+        link = image.split("_").find(substring => substring.startsWith("https"));
+    } 
+    // else, generate AI image
+    else {
+        link = "https://image.pollinations.ai/prompt/"+image;
     }
     
-    if (props.status === "during" || props.status === "guessed" ) {return (
+    // only show image while people are guessing
+    if (status === "during" || status === "guessed" ) {return (
         <div id="imageSection">
             <img src={link} alt="" className="img-fluid"></img>
         </div>
