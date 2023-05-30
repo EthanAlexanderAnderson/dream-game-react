@@ -7,13 +7,7 @@ function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomB
         // increment timer
         if (trigger && seconds > 0) {
             // disable buttons
-            if (seconds === 16) {
-                disableRandomButton();
-            } else if (seconds === 8) {
-                disableRandomButton();
-            } else if (seconds === 4) {
-                disableRandomButton();
-            } else if (seconds === 2) {
+            if (seconds && (seconds & (seconds - 1)) === 0) {
                 disableRandomButton();
             }
 
