@@ -6,6 +6,7 @@ import ImageSection from './imageSection';
 import MessageSection from './messageSection';
 import ProfileSection from './profileSection';
 import Timer from './timer';
+import Leaderboard from './leaderboard';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
@@ -159,8 +160,13 @@ function App() {
 
       <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
 
-      <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
- 
+    {name !== "" ? ( // only render this section after name is set
+      <div className='col-sm-3 order-3'>
+        <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
+
+        <Leaderboard stats={stats} PFPs={PFPs}/>
+      </div>
+    ) : null }
     </div>
   );
 }

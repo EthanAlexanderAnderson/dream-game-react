@@ -35,18 +35,16 @@ function ProfileSection(props) {
         }
     }
 
-    if (props.name !== "") {
-        return (
-            <div id="profileSection" className='col-sm-3 order-3'>
-                <div id="profileSectionHeader">
-                    <div className="profileName">Profile: {props.name}</div>
-                    <img className="profileImage" alt="Large profile" src={PFP}></img>
-                </div>
-                {stats.map((item, index) => (
-                    <li key={index} className={"mod"+index%2}>{labels[index]}{item}</li>
-                ))}
+    return (
+        <div id="profileSection">
+            <div id="profileSectionHeader">
+                <div className="profileName">Profile: {props.name}</div>
+                <img className="profileImage" alt="Large profile" src={PFP}></img>
             </div>
-        );
-        }
+            {stats.map((item, index) => (
+                <li key={index} className={"mod"+index%2}>{labels[index]}{item}</li>
+            ))}
+        </div>
+    );
 };
 export default ProfileSection;
