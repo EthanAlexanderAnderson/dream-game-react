@@ -20,12 +20,12 @@ function Leaderboard({ stats, PFPs }) {
         <div id="leaderboard">
             <div className="accordion">
                 <div className="accordion-item">    
-                    <h2 class="accordion-header" id="leaderboardTableHeader">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#leaderboardTable" aria-expanded="true" aria-controls="collapseOne">
+                    <h2 className="accordion-header" id="leaderboardTableHeader">
+                        <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#leaderboardTable" aria-expanded="true" aria-controls="collapseOne">
                             Leaderboard
                         </button>
                     </h2>
-                    <div id="leaderboardTable" class="accordion-collapse collapse">
+                    <div id="leaderboardTable" className="accordion-collapse collapse">
                         <table className="table">
                             <thead>
                                 <tr key="Header Row">
