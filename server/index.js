@@ -48,7 +48,6 @@ var gnomeChance = -1;
 io.on("connection", (socket) => {
 
     updateStats();
-    loadDifficulty();
 
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
@@ -392,6 +391,7 @@ async function updateStats() {
         stats.push(temp);
     }
     io.emit("update_stats", stats);
+    loadDifficulty();
 }
 
 async function updatePFPs() {
