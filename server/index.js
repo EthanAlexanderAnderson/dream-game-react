@@ -33,6 +33,7 @@ let playerCount = 0;
 let guessCount = 0;
 let scores = [];
 let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr ]
+let difficulty = [];
 let status = "before";
 let bottomFeeder = {
     name: "",
@@ -47,6 +48,7 @@ var gnomeChance = -1;
 io.on("connection", (socket) => {
 
     updateStats();
+    loadDifficulty();
 
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
@@ -271,6 +273,10 @@ io.on("connection", (socket) => {
                 }
             }
         }
+
+        // DIFFICULTY
+        difficulty[buffer[buffer.length-1]]--;
+        client.set(("%difficulty"),difficulty.join(","));
         
         io.emit("update_scores", scores);
     });
@@ -320,8 +326,12 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
+
+        // DIFFICULTY
+        difficulty[buffer[buffer.length-1]]++;
+        client.set(("%difficulty"),difficulty.join(","));
+
         io.emit("update_scores", scores);
-        
     });
 
     socket.on("increment_score", (name) => {
@@ -391,6 +401,11 @@ async function updatePFPs() {
         PFPs.push([n, redisResult]);
     }
     io.emit("update_PFPs", PFPs);
+}
+
+async function loadDifficulty() {
+    await fetch("%difficulty");
+    difficulty = redisResult.split(",");
 }
 
 // GETTERS AND SETTERS FOR scores VARIABLE
