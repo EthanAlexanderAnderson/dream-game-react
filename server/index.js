@@ -40,6 +40,8 @@ let bottomFeeder = {
   };
 let earlyBird = "";
 let PFPs = [];
+let gnome = false;
+var gnomeChance = -1;
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
@@ -67,6 +69,8 @@ io.on("connection", (socket) => {
         }        
         if (playerCount <= 0){
             playerCount = 0;
+            gnome = false;
+            gnomeChance = -1;
         }
         if (playerCount <= 0 || guessCount <= 0){
             guessCount = 0;
@@ -95,6 +99,7 @@ io.on("connection", (socket) => {
         }
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
+        io.emit("toggle_gnome_button_status", gnome);
         updatePFPs();
     });
 
@@ -107,6 +112,9 @@ io.on("connection", (socket) => {
             setReady("all", "Waiting...");
             clearBonus();
             io.emit("update_scores", scores);
+            if (gnome) {
+                gnomeChance = Math.floor(Math.random() * 5);
+            }
         } else {
             updateRandomDream("refresh", socket);
         }
@@ -122,6 +130,10 @@ io.on("connection", (socket) => {
         io.emit("update_scores", scores);
         if (guessCount <= 1){
             earlyBird = getName(socket);
+        }
+        // if anyone guessed gnome, it means the gnome button exists, thus answer is gnome
+        if (guess === "Gnome") {
+            dreamer = "Gnome";
         }
         if (guessCount === playerCount){
             console.log("Server side all guessed. Dreamer: "+ dreamer);
@@ -316,6 +328,14 @@ io.on("connection", (socket) => {
         scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
         io.emit("update_scores", scores);
     });
+
+    socket.on("toggle_gnome", () => {
+        gnome = !gnome;
+        io.emit("toggle_gnome_button_status", gnome);
+        if (!gnome){
+            gnomeChance=-1;
+        }
+    });
 });
 
 
@@ -347,9 +367,9 @@ async function updateRandomDream(type, socket){
         dream = redisResult;
         await fetch("&dreamer"+rng);
         dreamer = redisResult;
-        io.emit("get_random_dream_d", { dream, dreamer} );
+        io.emit("get_random_dream_d", { dream, dreamer, gnomeChance } );
     } else {
-        socket.emit("get_random_dream_d", { dream, dreamer} );
+        socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance } );
     }
 }
 

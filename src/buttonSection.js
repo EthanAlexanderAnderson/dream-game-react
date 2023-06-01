@@ -1,6 +1,6 @@
 import React from "react";
 
-function ButtonSection({name, playerJoin, status, start, guess, disabled}) {
+function ButtonSection({ name, playerJoin, status, start, guess, disabled, toggleGnome, gnomeButtonStatus }) {
     let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
     let classes = []
 
@@ -43,6 +43,8 @@ function ButtonSection({name, playerJoin, status, start, guess, disabled}) {
         return(
             <div id="controlButtons">
                 <button className="btn btn-light" onClick={() => start()}>Start</button>
+                <br></br>
+                <button className={gnomeButtonStatus ? 'btn gnome toggled' : 'btn gnome'} onClick={() => toggleGnome()}><img id="toggleGnome" src="gnome_256.png" alt="toggle gnome mode"></img></button>
             </div>
         );
     }

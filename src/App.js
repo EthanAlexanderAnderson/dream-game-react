@@ -13,6 +13,7 @@ const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
 
 var myGuess = "";
 var answer = "";
+var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
 // sound effects by AndreWharn
 const ping = new Audio('ping.mp3');
@@ -22,6 +23,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [textSection, setTextSection] = useState("");
+  const [textSectionTwo, setTextSectionTwo] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("before");
@@ -31,6 +33,7 @@ function App() {
   const [PFPs, setPFPs] = useState([]);
   const [timerTrigger, setTimerTrigger] = useState(false);
   const [disabled, setDisabled] = useState([]);
+  const [gnomeButtonStatus, setGnomeButtonStatus] = useState(false);
 
   // player come online
   const playerJoin = (name) => {
@@ -47,6 +50,16 @@ function App() {
   // start round
   const start = () => {
     socket.emit("get_random_dream_u");
+  };
+
+  // toggle gnome mode on or off
+  const toggleGnome = () => {
+    socket.emit("toggle_gnome");
+  };
+
+  const toggleGnomeButtonStatus = (gnomeStatus) => {
+    setGnomeButtonStatus(gnomeStatus);
+    gnome = gnomeStatus;
   };
 
   // player guesses
@@ -79,6 +92,21 @@ function App() {
     answer = data.dreamer;
     myGuess = "";
     setTimerTrigger(true);
+
+    if (gnome) {
+      const split = data.dream.split(' ');
+      // if dream is long enough and 20% chance is reached (gnomeChance can be 0 to 4)
+      if (split.length > 16 && data.gnomeChance === 0) {
+        for (let i = (Math.floor(split.length / 2)); i < (split.length - 5); i++) {
+          if (split[i].length === 5) {
+            setTextSection(split.slice(0, i).join(" ") + " ");
+            setTextSectionTwo(split.slice(i+1, split.length).join(" "));
+            answer = "Gnome";
+            break
+          }
+        }
+      }
+    }
   }
 
   // when all players guessed
@@ -129,7 +157,8 @@ function App() {
     socket.on("update_scores", updateScores);
     socket.on("update_stats", updateStats);
     socket.on("update_PFPs", updatePFPs);
-
+    socket.on("toggle_gnome_button_status", toggleGnomeButtonStatus);
+    
     return () => {
       socket.off("receive_message");
       socket.off("player_join_d");
@@ -138,6 +167,7 @@ function App() {
       socket.off("update_scores");
       socket.off("update_stats");
       socket.off("update_PFPs");
+      socket.off("toggle_gnome_button_status");
     };
 
   }, [socket]);
@@ -146,9 +176,17 @@ function App() {
   return (
     <div className="App container row mx-auto">
       
-      <div className='col  order-sm-2'>
-        <div id='textSection'>{textSection}</div>
-        <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled}/>
+      <div className='col order-sm-2'>
+        
+        <div id='textSection'>{textSection}
+         {answer === "Gnome" && status === "during" ? (
+          <>
+            <button id="hidingGnome" onClick={() => guess("Gnome")}>gnome</button> {textSectionTwo}
+          </>
+         ) : "" }
+        </div>
+
+        <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
         <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton}/>
 

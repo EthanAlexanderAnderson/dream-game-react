@@ -46,6 +46,28 @@ img {
     flex-direction: column;
 }
 
+#toggleGnome {
+    height: 40px;
+    width: 40px;
+}
+
+#hidingGnome {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: none;
+}
+
+.gnome{
+    filter: grayscale(100%);
+}
+
+.toggled {
+    filter: none !important;
+}
+
 li {
     white-space: pre-wrap;
 }
