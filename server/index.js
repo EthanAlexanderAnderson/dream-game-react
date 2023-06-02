@@ -34,7 +34,6 @@ let guessCount = 0;
 let scores = [];
 let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr ]
 let difficulty = [];
-clean = [3,5,6,7,8,13,14,15,17,25,36,41,42,44,50]
 let status = "before";
 let bottomFeeder = {
     name: "",
@@ -365,7 +364,7 @@ async function updateRandomDream(type, socket){
         let count = parseInt(redisResult);
         // generate random dream unseen for 100 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
-        while (buffer.includes(rng) || !clean.includes(rng)) {
+        while (buffer.includes(rng)) {
             rng = Math.floor(Math.random() * Math.floor(count));
         }
         buffer.push(rng);
