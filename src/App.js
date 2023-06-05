@@ -15,6 +15,7 @@ var myGuess = "";
 var answer = "";
 var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+let position = 0;
 const gnomeSFX = new Audio('gnome.mp3');
 // sound effects by AndreWharn
 const ping = new Audio('ping.mp3');
@@ -132,6 +133,12 @@ function App() {
 
   const updateScores = (data) => {
     setScores(data);
+    for (let i = 0; i < data.length; i++) {
+      if (data[i][1] === name) {
+          position = i;
+          console.log("name: " + name + "   pos: " + position);
+      }
+    }
   }
 
   const updateStats = (data) => {
@@ -203,7 +210,7 @@ function App() {
 
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
-        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton}/>
+        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 

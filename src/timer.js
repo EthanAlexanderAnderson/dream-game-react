@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 
-function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomButton }) {
+function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomButton, position }) {
     const [seconds, setSeconds] = useState(initialSeconds);
 
+    let equityDisables = [];
+    for (let i = 0; i < position; i++) {
+        equityDisables.push((2**(i)) * 3)
+    }
     useEffect(() => {
         // increment timer
         if (trigger && seconds > 0) {
             // disable buttons
             if (seconds && (seconds & (seconds - 1)) === 0) {
+                disableRandomButton();
+            }
+            // extra button disables for lower ranked players
+            if (equityDisables.includes(seconds)) {
                 disableRandomButton();
             }
 
@@ -25,7 +33,7 @@ function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomB
         } 
         // when round is over and player guessed during the round
         else if (!trigger && (seconds !== 10 || myGuess !== "-----")) {
-            setSeconds(30);
+            setSeconds(30 + (position * 5));
         }
 
     }, [trigger, seconds]);
