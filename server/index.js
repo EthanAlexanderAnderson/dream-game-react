@@ -369,13 +369,16 @@ async function updateRandomDream(type, socket){
         let count = parseInt(redisResult);
         // generate random dream unseen for 100 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
-        while (buffer.includes(rng)) {
+        let i = 0;
+        while (buffer.includes(rng) || ((difficulty[rng] < -1 || difficulty[rng] > 1) && i < 1000)) {
             rng = Math.floor(Math.random() * Math.floor(count));
+            i++;
         }
         buffer.push(rng);
         if (buffer.length > 100) {
             buffer.shift();
         }
+        console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i);
         console.log("Buffer: " + buffer);
         await fetch("&dream"+rng);
         dream = redisResult;
