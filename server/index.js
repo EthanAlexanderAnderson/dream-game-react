@@ -300,6 +300,11 @@ io.on("connection", (socket) => {
         stats = stats.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === name ? parseInt(el) + 1 : el));
         // memory incorrect
         stats = stats.map(subArr => subArr.map((el, i) => i === 6 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
+        // gnome count and score decrease
+        if ( dreamer === "Gnome" ) {
+            stats = stats.map(subArr => subArr.map((el, i) => i === 4 && subArr[0] === name ? parseInt(el) + 1 : el));
+            scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? parseInt(el) - 10 : el));
+        }
         io.emit("update_stats", stats);
 
         // BONUSES
