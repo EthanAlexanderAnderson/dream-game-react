@@ -85,10 +85,15 @@ li {
     width: 100%;
 }
 
-.scoreDiff {
+.scoreDiffPos {
  color: green;
  vertical-align: super;
 }
+
+.scoreDiffNeg {
+    color: red;
+    vertical-align: super;
+   }
 
 .bonus {
     color: green;

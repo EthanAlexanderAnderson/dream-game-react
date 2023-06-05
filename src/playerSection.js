@@ -70,7 +70,8 @@ function PlayerSection(props) {
                                     // show guess
                                     itemThree = item[4];
                                     // set score and bonus info
-                                    scoreDiff = ((item[2] - item[6]) !== 0) ? <span className="scoreDiff">+{item[2] - item[6]}</span> : null
+                                    // score diff
+                                    scoreDiff = ((item[2] - item[6]) > 0) ? <span className="scoreDiffPos">+{item[2] - item[6]}</span> : ((item[2] - item[6]) < 0) ? <span className="scoreDiffNeg">{item[2] - item[6]}</span> : null
                                     bonusArray = item[7].map((bonus, index) => <div key={bonus[0]+item[1]} className="bonus">{bonus[0]} +{bonus[1]}</div>)
                                 } else if (status === "before") {
                                     // show skill rating
