@@ -15,6 +15,7 @@ var myGuess = "";
 var answer = "";
 var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+const gnomeSFX = new Audio('gnome.mp3');
 // sound effects by AndreWharn
 const ping = new Audio('ping.mp3');
 
@@ -118,6 +119,9 @@ function App() {
     } else {
       setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("incorrect", name);
+      if (answer === "Gnome") {
+        gnomeJumpscare();
+      }
     }
     setStatus("after");
     setImage("");
@@ -145,6 +149,13 @@ function App() {
     }
     setDisabled(prevArray => [...prevArray, randomNumber]);
     setDisabled(prevArray => [...prevArray].sort((a, b) => a - b));
+  }
+
+  const gnomeJumpscare = () => {
+    gnomeSFX.play();
+    var jumpscare = document.getElementById("jumpscare");
+    jumpscare.classList.add("show");
+    setTimeout(function(){ jumpscare.classList.remove("show"); }, 1500);
   }
 
   // receive from socket
@@ -175,6 +186,10 @@ function App() {
   // display
   return (
     <div className="App container row mx-auto">
+
+      <div id="jumpscare" class="jumpscare">
+          <img src="gnome_256.png" alt="jumpscare gnome" />
+      </div>
       
       <div className='col order-sm-2'>
         
