@@ -46,6 +46,10 @@ img {
     flex-direction: column;
 }
 
+#profileSection {
+    list-style-type: none;
+}
+
 #toggleGnome {
     height: 40px;
     width: 40px;
@@ -153,17 +157,32 @@ li {
       to {opacity:0 ;}
   }
 
-/* Mobile and smaller */
-@media (max-width: 991.98px) {  
+/* less than extra large */
+@media (max-width: 1200px) {  
     .message {
         width: 100%;
     }
     .App {
-        width: 100%;
-        font-size: 14px;
+        font-size: 16px;
     }
     #imageSection {
         height: 100%;
+    }
+}
+
+/* less than large */
+@media (max-width: 992px) {  
+    .App {
+        width: 100%;
+        font-size: 14px;
+    }
+}
+
+/* less than medium */
+@media (max-width: 768px) {  
+    .App {
+        width: 100%;
+        max-width: 100%;
     }
 }
 
