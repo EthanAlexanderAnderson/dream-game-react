@@ -370,7 +370,7 @@ async function updateRandomDream(type, socket){
         // generate random dream unseen for 100 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
-        while (buffer.includes(rng) || ((difficulty[rng] < -1 || difficulty[rng] > 1) && i < 1000)) {
+        while (buffer.includes(rng) || ((difficulty[rng] < -2 || difficulty[rng] > 2) && i < 1000)) {
             rng = Math.floor(Math.random() * Math.floor(count));
             i++;
         }
