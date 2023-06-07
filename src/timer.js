@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomButton, position }) {
+function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomButton, position, tick }) {
     const [seconds, setSeconds] = useState(initialSeconds);
 
     let equityDisables = [];
@@ -17,6 +17,10 @@ function Timer({ initialSeconds, trigger, guess, myGuess, status, disableRandomB
             // extra button disables for lower ranked players
             if (equityDisables.includes(seconds)) {
                 disableRandomButton();
+            }
+
+            if (seconds <= 5) {
+                tick.play();
             }
 
             const interval = setInterval(() => {

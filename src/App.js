@@ -17,8 +17,10 @@ var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
 let position = 0;
 const gnomeSFX = new Audio('gnome.mp3');
-// sound effects by AndreWharn
+// ping sound effect by AndreWharn
 const ping = new Audio('ping.mp3');
+// tick sound effect by FoolBoyMedia
+const tick = new Audio('tick.mp3');
 
 function App() {
   // states
@@ -210,7 +212,7 @@ function App() {
 
         <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
-        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position}/>
+        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 
