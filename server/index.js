@@ -2,7 +2,12 @@
 const dotenv = require("dotenv");
 dotenv.config();
 const redis = require("ioredis");
-const client = redis.createClient(process.env.REDIS_URL);
+const client = redis.createClient({
+    url: process.env.REDIS_URL,
+    tls: {
+        rejectUnauthorized: false,
+    },
+});
 const express = require("express");
 const app = express();
 const http = require("http");
