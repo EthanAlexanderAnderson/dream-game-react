@@ -48,7 +48,7 @@ function PlayerSection(props) {
 
     //console.log(PFPs);
 
-    if (!(name === "")){
+    if (name !== ""){
         if (Array.isArray(playerSection)) { 
             return (
                 <div id="playerSection">

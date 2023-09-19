@@ -30,7 +30,7 @@ function App() {
   const [textSectionTwo, setTextSectionTwo] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
-  const [status, setStatus] = useState("before");
+  const [status, setStatus] = useState("password");
   const [players, setPlayers] = useState([]); 
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
@@ -210,7 +210,7 @@ function App() {
          ) : "" }
         </div>
 
-        <ButtonSection name={name} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
+        <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
         <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick}/>
 
