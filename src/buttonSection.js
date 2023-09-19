@@ -18,7 +18,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
 
     const [message, setMessage] = useState('');
     const handleChange = event => {
-        if (event.target.value === "silly"){
+        if (event.target.value === "silly" || event.target.value === "Silly"){
             setStatus("before");
         }
         setMessage(event.target.value);
