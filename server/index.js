@@ -171,25 +171,11 @@ io.on("connection", (socket) => {
     });
 
     socket.on("correct", (name) => {
-                
+        
         let statindex = -1;
         let scoreindex = -1;
         let dreamerindex = -1;
-        for (let i = 0; i < scores.length; i++) {
-            if (scores[i][1] === name) {
-                scoreindex = i;
-                
-            }
-            if (scores[i][1] === dreamer) {
-                dreamerindex = i;
-            }
-        }
-        for (let i = 0; i < stats.length; i++) {
-            if (stats[i][0] === name) {
-                statindex = i;
-                break;
-            }
-        }
+        [statindex, scoreindex, dreamerindex] = setIndexes(name);
 
         if (scores[scoreindex][5] <= 0) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // let negative streak to 0
@@ -248,6 +234,9 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Early Bird", 1]]) : el));
         }
         // irony bonus 
+        // theres a bug here whhen the dreamer moves in the leaderboard before this point, irony is assigned not properly
+        // we just need to reassign dreamerindex to the new position of the dreamer
+        [statindex, scoreindex, dreamerindex] = setIndexes(name);
         if (scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][4] !== dreamer) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Irony", 1]]) : el));
@@ -481,6 +470,28 @@ function clearBonus() {
     for (let i = 0; i < scores.length; i++) {
         scores[i][7] = [];
     }
+}
+
+function setIndexes(name) {
+    let statindex = -1;
+    let scoreindex = -1;
+    let dreamerindex = -1;
+    for (let i = 0; i < scores.length; i++) {
+        if (scores[i][1] === name) {
+            scoreindex = i;
+            
+        }
+        if (scores[i][1] === dreamer) {
+            dreamerindex = i;
+        }
+    }
+    for (let i = 0; i < stats.length; i++) {
+        if (stats[i][0] === name) {
+            statindex = i;
+            break;
+        }
+    }
+    return [statindex, scoreindex, dreamerindex];
 }
 
 /* notes
