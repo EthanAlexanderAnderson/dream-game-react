@@ -57,7 +57,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
             </div>
         );
     } 
-    else {
+    else if (name === "") {
         return(
             <div>
             <input
