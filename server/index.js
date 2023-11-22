@@ -363,7 +363,13 @@ async function updateRandomDream(type, socket){
         // generate random dream unseen for 100 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
-        while (buffer.includes(rng) || ((difficulty[rng] < -2 || difficulty[rng] > 2) && i < 1000)) {
+        // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
+        while (buffer.includes(rng) || 
+        ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 100) || 
+        ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 400) ||
+        ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 700) ||
+        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 999)
+        ) {
             rng = Math.floor(Math.random() * Math.floor(count));
             i++;
         }
