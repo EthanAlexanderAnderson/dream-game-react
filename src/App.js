@@ -202,12 +202,14 @@ function App() {
       
       <div className='col order-sm-2'>
         
-        <div id='textSection'>{textSection}
-         {answer === "Gnome" && status === "during" ? (
+        <div id='textSection'>
+          <div id='result' style={{color: status == "after" ? textSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status == "after" ? 'bold' : 'normal'}}> {textSection.split('\n')[0]} </div>
+          {textSection.split('\n').slice(1).join('\n')}
+          {answer === "Gnome" && status === "during" ? (
           <>
             <button id="hidingGnome" onClick={() => guess("Gnome")}>gnome</button> {textSectionTwo}
           </>
-         ) : "" }
+          ) : "" }
         </div>
 
         <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
