@@ -360,7 +360,7 @@ async function updateRandomDream(type, socket){
     if (type === "new") {
         await fetch("&dreamcount");
         let count = parseInt(redisResult);
-        // generate random dream unseen for 100 length buffer
+        // generate random dream unseen for 200 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
         // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
@@ -374,7 +374,7 @@ async function updateRandomDream(type, socket){
             i++;
         }
         buffer.push(rng);
-        if (buffer.length > 100) {
+        if (buffer.length > 200) {
             buffer.shift();
         }
         console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i);
