@@ -198,4 +198,8 @@ li {
     .profileImage {
         width: 30%;
     }
+
+    .col {
+        padding: 0px;
+    }
 }

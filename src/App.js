@@ -247,7 +247,7 @@ function App() {
       <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
 
     {name !== "" ? ( // only render this section after name is set
-      <div className='col-sm-3 order-3'>
+      <div className='col-sm-3 order-3'  style={{ padding: "0px" }}>
         <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
 
         <Leaderboard stats={stats} PFPs={PFPs}/>
