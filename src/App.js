@@ -15,6 +15,7 @@ var myGuess = "";
 var answer = "";
 var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+let difficultyString = "";
 let position = 0;
 const gnomeSFX = new Audio('gnome.mp3');
 // ping sound effect by AndreWharn
@@ -93,6 +94,23 @@ function App() {
     setTextSection(data.dream);
     setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
+    let difficulty = data.dreamDifficulty;
+    console.log("difficulty: " + difficulty);
+    if (difficulty <= -3) {
+      difficultyString = "Trivial";
+    } else if (difficulty >= -2 && difficulty <= 0) { 
+      difficultyString = "Very Easy";
+    } else if (difficulty >= 1 && difficulty <= 3) {
+      difficultyString = "Easy";
+    } else if (difficulty >= 4 && difficulty <= 6) {
+      difficultyString = "Medium";
+    } else if (difficulty >= 7 && difficulty <= 9) {
+      difficultyString = "Hard";
+    } else if (difficulty >= 10 && difficulty <= 12) {
+      difficultyString = "Very Hard";
+    } else {
+      difficultyString = "Impossible";
+    }
     answer = data.dreamer;
     myGuess = "";
     setTimerTrigger(true);
@@ -210,6 +228,10 @@ function App() {
             <button id="hidingGnome" onClick={() => guess("Gnome")}>gnome</button> {textSectionTwo}
           </>
           ) : "" }
+        </div>
+
+        <div id='difficultySection'>
+          <div id='difficultyText'>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
         </div>
 
         <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
