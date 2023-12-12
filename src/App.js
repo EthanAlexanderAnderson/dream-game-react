@@ -15,7 +15,6 @@ var myGuess = "";
 var answer = "";
 var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
-let difficultyString = "";
 let position = 0;
 const gnomeSFX = new Audio('gnome.mp3');
 // ping sound effect by AndreWharn
@@ -29,6 +28,8 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [textSection, setTextSection] = useState("");
   const [textSectionTwo, setTextSectionTwo] = useState("");
+  const [difficulty, setDifficulty] = useState(0);
+  const [difficultyString, setDifficultyString] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("password");
@@ -94,22 +95,24 @@ function App() {
     setTextSection(data.dream);
     setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
-    let difficulty = data.dreamDifficulty;
-    console.log("difficulty: " + difficulty);
-    if (difficulty <= -3) {
-      difficultyString = "Trivial";
-    } else if (difficulty >= -2 && difficulty <= 0) { 
-      difficultyString = "Very Easy";
-    } else if (difficulty >= 1 && difficulty <= 3) {
-      difficultyString = "Easy";
-    } else if (difficulty >= 4 && difficulty <= 6) {
-      difficultyString = "Medium";
-    } else if (difficulty >= 7 && difficulty <= 9) {
-      difficultyString = "Hard";
-    } else if (difficulty >= 10 && difficulty <= 12) {
-      difficultyString = "Very Hard";
+    //setDifficulty(data.dreamDifficulty);
+    console.log("difficulty: " + data.dreamDifficulty);
+    if (data.dreamDifficulty <= -3) {
+      setDifficultyString("Trivial");
+    } else if (data.dreamDifficulty >= -2 && data.dreamDifficulty <= 0) { 
+      setDifficultyString("Very Easy");
+    } else if (data.dreamDifficulty >= 1 && data.dreamDifficulty <= 3) {
+      setDifficultyString("Easy");
+    } else if (data.dreamDifficulty >= 4 && data.dreamDifficulty <= 6) {
+      setDifficultyString("Medium");
+    } else if (data.dreamDifficulty >= 7 && data.dreamDifficulty <= 9) {
+      setDifficultyString("Hard");
+    } else if (data.dreamDifficulty >= 10 && data.dreamDifficulty <= 12) {
+      setDifficultyString("Very Hard");
+    } else if (data.dreamDifficulty >= 13) {
+      setDifficultyString("Impossible");
     } else {
-      difficultyString = "Impossible";
+      setDifficultyString("Unknown");
     }
     answer = data.dreamer;
     myGuess = "";
