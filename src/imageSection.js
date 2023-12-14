@@ -4,7 +4,7 @@ function ImageSection({image, status}) {
     let link = "";
     // if dream contains an image link, display that image
     if (image.includes("https")) {
-        link = image.split("_").find(substring => substring.startsWith("https"));
+        link = image.split("%20").find(substring => substring.startsWith("https"));
     } 
     // else, generate AI image
     else {
