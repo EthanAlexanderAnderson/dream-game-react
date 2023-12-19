@@ -224,7 +224,8 @@ function App() {
       <div className='col order-sm-2'>
         
         <div id='textSection'>
-          <div id='result' style={{color: status == "after" ? textSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status == "after" ? 'bold' : 'normal'}}> {textSection.split('\n')[0]} </div>
+          <div id="gnomeStatus"  style={{color: "red"}}>{gnome ? "Gnome mode is Active" : ""}</div>
+          <div id='result' style={{color: status == "after" ? textSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status == "after" ? 'bold' : 'normal'}}>{textSection.split('\n')[0]}</div>
           {textSection.split('\n').slice(1).join('\n')}
           {answer === "Gnome" && status === "during" ? (
           <>
