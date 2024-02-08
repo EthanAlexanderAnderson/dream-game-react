@@ -366,9 +366,9 @@ async function updateRandomDream(type, socket){
         // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
         while (buffer.includes(rng) || 
         ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 25) || 
-        ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 50) ||
-        ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 100) ||
-        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 200)
+        ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 30) ||
+        ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 35) ||
+        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 40)
         ) {
             rng = Math.floor(Math.random() * Math.floor(count));
             i++;
