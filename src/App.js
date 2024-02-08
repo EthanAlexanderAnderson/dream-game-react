@@ -28,6 +28,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [textSection, setTextSection] = useState("");
   const [textSectionTwo, setTextSectionTwo] = useState("");
+  const [resultSection, setResultSection] = useState("");
   const [difficulty, setDifficulty] = useState(0);
   const [difficultyString, setDifficultyString] = useState("");
   const [image, setImage] = useState("");
@@ -93,6 +94,7 @@ function App() {
 
   const getRandomDreamD = (data) => {
     setTextSection(data.dream);
+    setResultSection("");
     setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
     //setDifficulty(data.dreamDifficulty);
@@ -138,15 +140,16 @@ function App() {
   const allGuessed = (answer) => {
     answer = answer;
     if (answer === myGuess) {
-      setTextSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
+      setResultSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("correct", name);
     } else {
-      setTextSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
+      setResultSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("incorrect", name);
       if (answer === "Gnome") {
         gnomeJumpscare();
       }
     }
+    setTextSection("");
     setStatus("after");
     setImage("");
     myGuess = "";
@@ -225,9 +228,10 @@ function App() {
         
         <div id='textSection'>
           <div id="gnomeStatus"  style={{color: "red"}}>{gnome ? "Gnome mode is Active" : ""}</div>
-          <div id='result' style={{color: status == "after" ? textSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status == "after" ? 'bold' : 'normal'}}>{textSection.split('\n')[0]}</div>
-          {textSection.split('\n').slice(1).join('\n')}
-          {answer === "Gnome" && status === "during" ? (
+          <div id='resultHeader' style={{color: status == "after" ? resultSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status == "after" ? 'bold' : 'normal'}}>{resultSection.split('\n')[0]}</div>
+          <div id='resultBody'>{resultSection.split('\n').slice(1).join('\n')}</div>
+          {textSection}
+          {answer === "Gnome" && (status === "during" || status === "guessed")  ? (
           <>
             <button id="hidingGnome" onClick={() => guess("Gnome")}>gnome</button> {textSectionTwo}
           </>

@@ -29,9 +29,13 @@ img {
     padding: 0;
 }
 
-#textSection {
+#resultHeader, #resultBody {
     font-size: 18px;
     margin-bottom: 1em;
+}
+
+#difficultySection {
+    margin-top: 1em;
 }
 
 #messageSection, #profileSection {
