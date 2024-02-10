@@ -47,6 +47,7 @@ let earlyBird = "";
 let PFPs = [];
 let gnome = false;
 var gnomeChance = -1;
+let roundNumber = 0;
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
@@ -91,6 +92,10 @@ io.on("connection", (socket) => {
         console.log(`User Connected: ${socket.id} ${name}`);
         socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
+            // if no players connected when a player joins, reset round number
+            if (playerCount === 0) {
+                roundNumber = 0;
+            }
             playerCount++;
             // scores variable items: id, name, score, ready, guess, streak, scorePrev, bonus Array
             scores.push([socket.id, name, 0, "Waiting...", "null", 0, 0, []]);
@@ -358,21 +363,70 @@ var dreamer = "";
 var buffer = [];
 async function updateRandomDream(type, socket){
     if (type === "new") {
+        roundNumber++;
         await fetch("&dreamcount");
         let count = parseInt(redisResult);
         // generate random dream unseen for 200 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
         // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
-        while (buffer.includes(rng) || 
-        ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 25) || 
-        ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 30) ||
-        ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 35) ||
-        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 40)
-        ) {
-            rng = Math.floor(Math.random() * Math.floor(count));
-            i++;
+
+        // progressive difficulty for first 70 rounds (quickplay mode)
+        console.log("roundNumber: " + roundNumber);
+        if (roundNumber <= 70) {
+            let lowerBounds;
+            let upperBounds;
+
+            if (roundNumber <= 10){
+                lowerBounds = -999;
+                upperBounds = -2;
+            }
+            else if (roundNumber <= 20){
+                lowerBounds = -2;
+                upperBounds = 0;
+            }
+            else if (roundNumber <= 30){
+                lowerBounds = 1;
+                upperBounds = 3;
+            }
+            else if (roundNumber <= 40){
+                lowerBounds = 4;
+                upperBounds = 6;
+            }
+            else if (roundNumber <= 50){
+                lowerBounds = 7;
+                upperBounds = 9;
+            }
+            else if (roundNumber <= 60){
+                lowerBounds = 10;
+                upperBounds = 12;
+            }
+            else if (roundNumber <= 70){
+                lowerBounds = 13;
+                upperBounds = 999;
+            }
+
+            while (buffer.includes(rng) || 
+            ((difficulty[rng] < lowerBounds || difficulty[rng] > upperBounds) && i < 2000)
+            ) {
+                rng = Math.floor(Math.random() * Math.floor(count));
+                i++;
+                console.log("rerolling " + difficulty[rng]);
+            }
         }
+        // regular old gameplay (freeplay mode)
+        else {
+            while (buffer.includes(rng) || 
+            ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 25) || 
+            ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 30) ||
+            ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 35) ||
+            ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 40)
+            ) {
+                rng = Math.floor(Math.random() * Math.floor(count));
+                i++;
+            }
+        }
+
         buffer.push(rng);
         if (buffer.length > 200) {
             buffer.shift();
@@ -384,7 +438,7 @@ async function updateRandomDream(type, socket){
         await fetch("&dreamer"+rng);
         dreamer = redisResult;
         let dreamDifficulty = difficulty[rng];
-        io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty} );
+        io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber} );
     } else {
         socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance } );
     }

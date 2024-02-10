@@ -41,6 +41,7 @@ function App() {
   const [timerTrigger, setTimerTrigger] = useState(false);
   const [disabled, setDisabled] = useState([]);
   const [gnomeButtonStatus, setGnomeButtonStatus] = useState(false);
+  const [roundNumber, setRoundNumber] = useState(0);
 
   // player come online
   const playerJoin = (name) => {
@@ -93,6 +94,7 @@ function App() {
   }
 
   const getRandomDreamD = (data) => {
+    setRoundNumber(data.roundNumber);
     setTextSection(data.dream);
     setResultSection("");
     setStatus("during");
@@ -220,7 +222,7 @@ function App() {
   return (
     <div className="App container row mx-auto">
 
-      <div id="jumpscare" class="jumpscare">
+      <div id="jumpscare" className="jumpscare">
           <img src="gnome_256.png" alt="jumpscare gnome" />
       </div>
       
@@ -251,8 +253,8 @@ function App() {
         <ImageSection image={image} status={status}/>
 
       </div>
-
-      <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages}/>
+      
+      <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages} roundNumber={roundNumber}/>
 
     {name !== "" ? ( // only render this section after name is set
       <div className='col-sm-3 order-3'  style={{ padding: "0px" }}>
