@@ -397,6 +397,12 @@ async function updateRandomDream(type, socket){
                 lowerBounds = 7;
                 upperBounds = 9;
             }
+            else if (roundNumber <= 70){
+                lowerBounds = 10;
+                upperBounds = 999;
+            }
+            /*
+            this is commented out until we have more impossible dreams
             else if (roundNumber <= 60){
                 lowerBounds = 10;
                 upperBounds = 12;
@@ -405,7 +411,7 @@ async function updateRandomDream(type, socket){
                 lowerBounds = 13;
                 upperBounds = 999;
             }
-
+            */
             while (buffer.includes(rng) || 
             ((difficulty[rng] < lowerBounds || difficulty[rng] > upperBounds) && i < 2000)
             ) {
