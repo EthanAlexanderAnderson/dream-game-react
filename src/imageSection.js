@@ -8,7 +8,7 @@ function ImageSection({image, status}) {
     } 
     // else, generate AI image
     else {
-        link = "https://image.pollinations.ai/prompt/"+image.split("_").join("%20");
+        link = "https://image.pollinations.ai/prompt/"+image.split("_").join("%20") + "%20" + Math.floor(Math.random() * 100) + "?model=deliberate";
     }
     
     // only show image while people are guessing
