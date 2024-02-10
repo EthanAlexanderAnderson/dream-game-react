@@ -379,7 +379,7 @@ async function updateRandomDream(type, socket){
 
             if (roundNumber <= 10){
                 lowerBounds = -999;
-                upperBounds = -2;
+                upperBounds = -3;
             }
             else if (roundNumber <= 20){
                 lowerBounds = -2;
