@@ -24,6 +24,7 @@ function RankSection({ stats, PFPs }) {
                             <tbody>
                                 {stats.map((item) => { 
                                     let rank = [];
+                                    item[7] = Math.floor(parseFloat(item[7]));
                                     if (item[7] !== undefined && item[7] !== null && item[7] !== "") {
                                         let rankcategory = "";
                                         // decide the rank category
