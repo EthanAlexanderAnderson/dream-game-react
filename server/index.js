@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
             }
 
             // prevents bricking from mid-round leavers
-            if (guessCount === playerCount){
+            if (guessCount === playerCount && guessCount !== 0){
                 console.log("server side all guessed: "+ redisResult);
                 io.emit("all_guessed", redisResult);
                 guessCount = 0;
@@ -97,13 +97,12 @@ io.on("connection", (socket) => {
                 roundNumber = 0;
             }
             playerCount++;
-            // scores variable items: id, name, score, ready, guess, streak, scorePrev, bonus Array
+            // scores variable items: id, name, score, ready, guess, skillrating, scorePrev, bonus Array
             scores.push([socket.id, name, 0, "Waiting...", "null", 0, 0, []]);
             for (let s of stats) {
                 if (s[0] === name) {
                     s.push(socket.id);
-                    
-                  break;
+                    break;
                 }
               }
         }
@@ -197,12 +196,20 @@ io.on("connection", (socket) => {
         }
         // memory correct
         stats = stats.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
+        // correct rank evaluation
+        let currentDreamDifficulty = parseFloat(difficulty[buffer[buffer.length-1]]).toFixed(2);
+        let SRo = parseFloat(stats[statindex][7]).toFixed(2);
+        console.log("SRo: "+ SRo);
+        console.log("SRn: "+ SRo + " + abs(" +  SRo + " - Math.max(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
+        console.log( "SRn: "+ (SRo + Math.abs( (SRo - Math.max(SRo, currentDreamDifficulty)) * 0.1 )) );
+        stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? (parseFloat(el) + (Math.abs( (parseFloat(el) - Math.max(parseFloat(el), currentDreamDifficulty)) * 0.1 ))).toFixed(2) : el));
         // wrap up stat stuff
+        console.log(stats[statindex]);  //rank exist here btw
         io.emit("update_stats", stats);
         let temp = []
-        // remove socket id and name from database push
+        // remove socket id and/or name from database push
         if (stats[statindex][0] === name) {
-            temp = stats[statindex].slice(1, 7)
+            temp = stats[statindex].slice(1, 8)
         }
         // push to database
         client.set(("%"+name),temp.join(","));
@@ -303,6 +310,14 @@ io.on("connection", (socket) => {
             stats = stats.map(subArr => subArr.map((el, i) => i === 4 && subArr[0] === name ? parseInt(el) + 1 : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? parseInt(el) - 10 : el));
         }
+        // incorrect rank evaluation
+        let currentDreamDifficulty = parseFloat(difficulty[buffer[buffer.length-1]]).toFixed(2);
+        let SRo = parseFloat(stats[statindex][7]).toFixed(2);
+        console.log("SRo: "+ SRo);
+        console.log("SRn: "+ SRo + " - abs(" +  SRo + " - Math.min(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
+        console.log("SRn: "+ (SRo - Math.abs( SRo - Math.min(SRo, currentDreamDifficulty)) * 0.1 ));
+        stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? (parseFloat(el) - (Math.abs( (parseFloat(el) - Math.min(parseFloat(el), currentDreamDifficulty)) * 0.1 ))).toFixed(2) : el));
+        console.log(stats[statindex]);
         io.emit("update_stats", stats);
 
         // BONUSES
@@ -417,7 +432,6 @@ async function updateRandomDream(type, socket){
             ) {
                 rng = Math.floor(Math.random() * Math.floor(count));
                 i++;
-                console.log("rerolling " + difficulty[rng]);
             }
         }
         // regular old gameplay (freeplay mode)

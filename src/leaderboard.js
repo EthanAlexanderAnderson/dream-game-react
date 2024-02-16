@@ -11,10 +11,10 @@ function Leaderboard({ stats, PFPs }) {
         let ratio = ((correct/(incorrect+correct+0.00001))*100).toFixed(2);
         let longestStreak = parseInt(stats[i][3]);
         let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
-        stats[i][7] = skillRating;
+        stats[i][8] = skillRating;
     }
 
-    stats.sort((a, b) => b[7] - a[7]);
+    stats.sort((a, b) => b[8] - a[8]);
 
     return (
         <div id="leaderboard">
@@ -35,11 +35,11 @@ function Leaderboard({ stats, PFPs }) {
                             </thead>
                             <tbody>
                                 {stats.map((item) => { 
-                                    if (item[7] > 0) {
+                                    if (item[8] > 0) {
                                         return (
                                             <tr key={item[0] + "Row"}>
                                                 <td key={item[0] + "name"}>{item[0]}</td>
-                                                <td key={item[0] + "skillRating" }>{item[7]}</td>
+                                                <td key={item[0] + "skillRating" }>{item[8]}</td>
                                             </tr>
                                         );
                                     }

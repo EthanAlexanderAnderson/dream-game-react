@@ -207,3 +207,43 @@ li {
         padding: 0px;
     }
 }
+
+/* ranks */
+
+.rank {
+    position: relative;
+    height: 1.4em;
+    bottom: 2px;
+    right: 10px;
+    background-blend-mode: darken;
+}
+
+.coal {
+    background-color: #000000;
+    rotate: 90deg;
+}
+
+.bronze {
+    background-color: #CD7F32;
+}
+
+.silver {
+    background-color: #B0B0B0;
+}
+
+.gold {
+    background-color: #FFD700;
+}
+
+.emerald {
+    background-color: #50C878;
+}
+
+.diamond {
+    background-color: #5de1ff;
+}
+
+.omnipotent {
+    background-color: #9d00ff;
+    rotate: 90deg;
+}

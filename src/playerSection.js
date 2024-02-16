@@ -2,6 +2,10 @@ import React from "react";
 
 function PlayerSection(props) {
 
+    // variable guide:
+    // stats: [name, correct, incorrect, longestStreak, gnome count, memory corr, memory incor, rank, skillrating]
+    // scores: [socket.id , name, score, status, guess, skillRating, prevScore, bonus array, rank]
+
     let name = props.name;
     let scores = props.scores;
     let stats = props.stats;
@@ -24,6 +28,7 @@ function PlayerSection(props) {
                 let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
                 let temp = scores[i];
                 temp[5] = skillRating;
+                temp[8] = Math.floor(parseFloat(stats[j][7]));
                 playerSection.push(temp);
             }
         }
@@ -62,6 +67,7 @@ function PlayerSection(props) {
                         </thead>
                         <tbody>
                             {playerSection.map((item, index) => {
+                                // items: [socket.id , name, score, status, guess, skillRating, prevScore, bonus array, rank]
                                 // show ready (default)
                                 let itemThree = item[3];
                                 let scoreDiff = "";
@@ -77,11 +83,58 @@ function PlayerSection(props) {
                                     // show skill rating
                                     itemThree = item[5];
                                 }
+                                let rank = [];
+                                // rank
+                                if (item[8] !== undefined && item[8] !== null && item[8] !== "") {
+                                    let rankcategory = "";
+                                    // decide the rank category
+                                    if (item[8] <= -3) {
+                                        rankcategory = "coal";
+                                    } else if (item[8] >= -2 && item[8] <= 0) { 
+                                        rankcategory = "bronze";
+                                    } else if (item[8] >= 1 && item[8] <= 3) {
+                                        rankcategory = "silver";
+                                    } else if (item[8] >= 4 && item[8] <= 6) {
+                                        rankcategory = "gold";
+                                    } else if (item[8] >= 7 && item[8] <= 9) {
+                                        rankcategory = "emerald";
+                                    } else if (item[8] >= 10 && item[8] <= 12) {
+                                        rankcategory = "diamond";
+                                    } else if (item[8] >= 13) {
+                                        rankcategory = "omnipotent";
+                                    }
+                                    // this if is just a weird patch to fix the mod line in the next for loop
+                                    let shouldbreak = false;
+                                    if (item[8] <= 0) {
+                                        if (item[8] <= -3) {
+                                            shouldbreak = true
+                                            item[8] += 99;
+                                        }
+                                        item[8] += 6;
+                                    }
+                                    // decide how many ticks to show
+                                    for (let i = 0; i < ((item[8] - 1) % 3 + 1); i++) {
+                                        rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png"></img>;
+                                        // coal and omnipotent can onlt have 1 tick
+                                        if (item[8] <= 0 || item[8] >= 13 || shouldbreak) {
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 return (
                                 <tr key={item[1] + "Row"}>
-                                    <td key={item[1] + "name"}><img className="PFP" src={PFPs.get(item[1])}></img>{item[1]}</td>
-                                    <td key={item[1] + "score"}>{item[2]} {scoreDiff} {bonusArray}</td>
-                                    <td key={item[1] + colThree }>{itemThree}</td>
+                                    <td key={item[1] + "name"}>
+                                        {rank}
+                                        <img className="PFP" src={PFPs.get(item[1])}></img>
+                                        {item[1]}
+                                    </td>
+                                    <td key={item[1] + "score"}>
+                                        {item[2]} {scoreDiff} {bonusArray}
+                                    </td>
+                                    <td key={item[1] + colThree }>
+                                        {itemThree}
+                                    </td>
                                 </tr>
                                 );
                             })}

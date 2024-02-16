@@ -7,6 +7,7 @@ import MessageSection from './messageSection';
 import ProfileSection from './profileSection';
 import Timer from './timer';
 import Leaderboard from './leaderboard';
+import RankSection from './rankSection';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
 const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
@@ -253,16 +254,22 @@ function App() {
         <ImageSection image={image} status={status}/>
 
       </div>
-      
-      <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages} roundNumber={roundNumber}/>
 
-    {name !== "" ? ( // only render this section after name is set
-      <div className='col-sm-3 order-3'  style={{ padding: "0px" }}>
-        <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
+      {name !== "" ? ( // only render this section after name is set
+        <div className='col-sm-3 order-1'  style={{ padding: "0px" }}>
+          <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages} roundNumber={roundNumber}/>
 
-        <Leaderboard stats={stats} PFPs={PFPs}/>
-      </div>
-    ) : null }
+          <RankSection stats={stats} PFPs={PFPs}/>
+        </div>
+      ) : null }
+
+      {name !== "" ? ( // only render this section after name is set
+        <div className='col-sm-3 order-3'  style={{ padding: "0px" }}>
+          <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
+
+          <Leaderboard stats={stats} PFPs={PFPs}/>
+        </div>
+      ) : null }
     </div>
   );
 }
