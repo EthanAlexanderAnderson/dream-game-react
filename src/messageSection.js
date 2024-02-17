@@ -1,8 +1,7 @@
 import React, { useRef } from "react";
 
 function MessageSection(props) {
-    let link = "";
-
+    
     // max number of messages
     let messages = props.messages.slice(-10);
 

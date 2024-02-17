@@ -18,53 +18,67 @@ function RankSection({ stats, PFPs }) {
                             <thead>
                                 <tr key="Header Row">
                                     <th key="Player" scope="col" className='w-50'>Player</th>
-                                    <th key="Skill Rating" scope="col" className='w-50'>Skill Rating</th>
+                                    <th key="Rank" scope="col" className='w-50'>Rank</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {stats.map((item) => { 
                                     let rank = [];
-                                    item[7] = Math.floor(parseFloat(item[7]));
-                                    if (item[7] !== undefined && item[7] !== null && item[7] !== "") {
+                                    //console.log(item);
+                                    if (item[7] !== undefined && item[7] !== null && item[7] !== "" && !isNaN(item[7])) {
+                                        let rankStat;
+                                        if (typeof item[7] === 'number') {
+                                            //console.log(item[0] + "'s rank is a number: " + item[7] + ". rounding to: " + Math.floor(item[7]));
+                                            rankStat = Math.floor(item[7]);
+
+                                        } else {
+                                            rankStat = Math.floor(parseFloat(item[7]));
+                                            if (isNaN(rankStat)) {
+                                                console.log(item[0] + "'s rank is not a number: " + item[7] + " type: " + typeof item[7]);
+                                            }
+                                            //console.log(item[0] + "'s rank is not a number: " + item[7] + " type: " + typeof item[7]);
+                                        }
                                         let rankcategory = "";
                                         // decide the rank category
-                                        if (item[7] <= -3) {
+                                        if (rankStat <= -3) {
                                             rankcategory = "coal";
-                                        } else if (item[7] >= -2 && item[7] <= 0) { 
+                                        } else if (rankStat >= -2 && rankStat <= 0) { 
                                             rankcategory = "bronze";
-                                        } else if (item[7] >= 1 && item[7] <= 3) {
+                                        } else if (rankStat >= 1 && rankStat <= 3) {
                                             rankcategory = "silver";
-                                        } else if (item[7] >= 4 && item[7] <= 6) {
+                                        } else if (rankStat >= 4 && rankStat <= 6) {
                                             rankcategory = "gold";
-                                        } else if (item[7] >= 7 && item[7] <= 9) {
+                                        } else if (rankStat >= 7 && rankStat <= 9) {
                                             rankcategory = "emerald";
-                                        } else if (item[7] >= 10 && item[7] <= 12) {
+                                        } else if (rankStat >= 10 && rankStat <= 12) {
                                             rankcategory = "diamond";
-                                        } else if (item[7] >= 13) {
+                                        } else if (rankStat >= 13) {
                                             rankcategory = "omnipotent";
                                         }
                                         // this if is just a weird patch to fix the mod line in the next for loop
                                         let shouldbreak = false;
-                                        if (item[7] <= 0) {
-                                            if (item[7] <= -3) {
+                                        if (rankStat <= 0) {
+                                            if (rankStat <= -3) {
                                                 shouldbreak = true
-                                                item[7] += 99;
+                                                rankStat += 99;
                                             }
-                                            item[7] += 6;
+                                            rankStat += 6;
                                         }
                                         // decide how many ticks to show
-                                        for (let i = 0; i < ((item[7] - 1) % 3 + 1); i++) {
-                                            rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png"></img>;
+                                        for (let i = 0; i < ((rankStat - 1) % 3 + 1); i++) {
+                                            rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png" alt='rank tick'></img>;
                                             // coal and omnipotent can onlt have 1 tick
-                                            if (item[7] <= 0 || item[7] >= 13 || shouldbreak) {
+                                            if (rankStat <= 0 || rankStat >= 13 || shouldbreak) {
                                                 break;
                                             }
                                         }
+                                    } else {
+                                        console.log("rank is undefined or null or empty string or NaN: " + item[7] + " type: " + typeof item[7]);
                                     }
                                     return (
                                         <tr key={item[0] + "Row"}>
                                             <td key={item[0] + "name"}>{item[0]}</td>
-                                            <td key={item[0] + "skillRating" }>{rank}</td>
+                                            <td key={item[0] + "rank" }>{rank}</td>
                                         </tr>
                                     );
                                 })}

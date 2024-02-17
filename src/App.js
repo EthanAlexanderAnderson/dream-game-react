@@ -30,7 +30,6 @@ function App() {
   const [textSection, setTextSection] = useState("");
   const [textSectionTwo, setTextSectionTwo] = useState("");
   const [resultSection, setResultSection] = useState("");
-  const [difficulty, setDifficulty] = useState(0);
   const [difficultyString, setDifficultyString] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
@@ -141,7 +140,6 @@ function App() {
 
   // when all players guessed
   const allGuessed = (answer) => {
-    answer = answer;
     if (answer === myGuess) {
       setResultSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("correct", name);
@@ -217,7 +215,7 @@ function App() {
       socket.off("toggle_gnome_button_status");
     };
 
-  }, [socket]);
+  }, [allGuessed, updateScores]);
 
   // display
   return (
@@ -231,7 +229,7 @@ function App() {
         
         <div id='textSection'>
           <div id="gnomeStatus"  style={{color: "red"}}>{gnome ? "Gnome mode is Active" : ""}</div>
-          <div id='resultHeader' style={{color: status == "after" ? resultSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status == "after" ? 'bold' : 'normal'}}>{resultSection.split('\n')[0]}</div>
+          <div id='resultHeader' style={{color: status === "after" ? resultSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status === "after" ? 'bold' : 'normal'}}>{resultSection.split('\n')[0]}</div>
           <div id='resultBody'>{resultSection.split('\n').slice(1).join('\n')}</div>
           {textSection}
           {answer === "Gnome" && (status === "during" || status === "guessed")  ? (

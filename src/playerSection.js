@@ -28,7 +28,21 @@ function PlayerSection(props) {
                 let skillRating = (ratio * ((correct/10) + longestStreak)).toFixed(0);
                 let temp = scores[i];
                 temp[5] = skillRating;
-                temp[8] = Math.floor(parseFloat(stats[j][7]));
+                // if rank is undefined or null or empty string or NaN
+                if (stats[j][7] === undefined || stats[j][7] === null || stats[j][7] === "" || isNaN(stats[j][7])) {
+                    console.log("rank is undefined or null or empty string or NaN: " + stats[j][7] + " type: " + typeof stats[j][7]);
+                }
+                // if rank is a number, round
+                if (typeof stats[j][7] === 'number') {
+                    temp[8] = Math.floor(stats[j][7]);
+                } 
+                // if not a number, try to parse and round
+                else {
+                    temp[8] = Math.floor(parseFloat(stats[j][7]));
+                    if (isNaN(temp[8])) {
+                        console.log(temp[1] + "'s rank is not a number: " + temp[8] + " type: " + typeof temp[8]);
+                    }
+                }
                 playerSection.push(temp);
             }
         }
@@ -114,7 +128,7 @@ function PlayerSection(props) {
                                     }
                                     // decide how many ticks to show
                                     for (let i = 0; i < ((item[8] - 1) % 3 + 1); i++) {
-                                        rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png"></img>;
+                                        rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png" alt='rank tick'></img>;
                                         // coal and omnipotent can onlt have 1 tick
                                         if (item[8] <= 0 || item[8] >= 13 || shouldbreak) {
                                             break;
@@ -126,7 +140,7 @@ function PlayerSection(props) {
                                 <tr key={item[1] + "Row"}>
                                     <td key={item[1] + "name"}>
                                         {rank}
-                                        <img className="PFP" src={PFPs.get(item[1])}></img>
+                                        <img className="PFP" src={PFPs.get(item[1])} alt='player'></img>
                                         {item[1]}
                                     </td>
                                     <td key={item[1] + "score"}>

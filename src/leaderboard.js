@@ -35,14 +35,12 @@ function Leaderboard({ stats, PFPs }) {
                             </thead>
                             <tbody>
                                 {stats.map((item) => { 
-                                    if (item[8] > 0) {
-                                        return (
-                                            <tr key={item[0] + "Row"}>
-                                                <td key={item[0] + "name"}>{item[0]}</td>
-                                                <td key={item[0] + "skillRating" }>{item[8]}</td>
-                                            </tr>
-                                        );
-                                    }
+                                    return (
+                                        <tr key={item[0] + "Row"}>
+                                            <td key={item[0] + "name"}>{item[0]}</td>
+                                            <td key={item[0] + "skillRating" }>{item[8]}</td>
+                                        </tr>
+                                    );
                                 })}
                             </tbody>
                         </table>
