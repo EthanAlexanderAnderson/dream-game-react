@@ -119,18 +119,19 @@ function PlayerSection(props) {
                                     }
                                     // this if is just a weird patch to fix the mod line in the next for loop
                                     let shouldbreak = false;
+                                    let modifier = 0;
                                     if (item[8] <= 0) {
                                         if (item[8] <= -3) {
                                             shouldbreak = true
-                                            item[8] += 99;
+                                            modifier = 99;
                                         }
-                                        item[8] += 6;
+                                        modifier = 6;
                                     }
                                     // decide how many ticks to show
-                                    for (let i = 0; i < ((item[8] - 1) % 3 + 1); i++) {
+                                    for (let i = 0; i < (((item[8] + modifier) - 1) % 3 + 1); i++) {
                                         rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png" alt='rank tick'></img>;
                                         // coal and omnipotent can onlt have 1 tick
-                                        if (item[8] <= 0 || item[8] >= 13 || shouldbreak) {
+                                        if ((item[8] + modifier) <= 0 || (item[8] + modifier) >= 13 || shouldbreak) {
                                             break;
                                         }
                                     }
@@ -146,7 +147,7 @@ function PlayerSection(props) {
                                     <td key={item[1] + "score"}>
                                         {item[2]} {scoreDiff} {bonusArray}
                                     </td>
-                                    <td key={item[1] + colThree }>
+                                    <td key={item[1] + colThree}>
                                         {itemThree}
                                     </td>
                                 </tr>

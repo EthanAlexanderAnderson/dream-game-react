@@ -463,13 +463,13 @@ async function updateRandomDream(type, socket){
         if (buffer.length > 200) {
             buffer.shift();
         }
+        let dreamDifficulty = difficulty[rng];
         console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i);
         console.log("Buffer: " + buffer);
         await fetch("&dream"+rng);
         dream = redisResult;
         await fetch("&dreamer"+rng);
         dreamer = redisResult;
-        let dreamDifficulty = difficulty[rng];
         io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber} );
     } else {
         socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance } );

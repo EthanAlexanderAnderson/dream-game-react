@@ -57,18 +57,19 @@ function RankSection({ stats, PFPs }) {
                                         }
                                         // this if is just a weird patch to fix the mod line in the next for loop
                                         let shouldbreak = false;
+                                        let modifier = 0;
                                         if (rankStat <= 0) {
                                             if (rankStat <= -3) {
                                                 shouldbreak = true
-                                                rankStat += 99;
+                                                modifier = 99;
                                             }
-                                            rankStat += 6;
+                                            modifier = 6;
                                         }
                                         // decide how many ticks to show
-                                        for (let i = 0; i < ((rankStat - 1) % 3 + 1); i++) {
+                                        for (let i = 0; i < (((rankStat + modifier) - 1) % 3 + 1); i++) {
                                             rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png" alt='rank tick'></img>;
                                             // coal and omnipotent can onlt have 1 tick
-                                            if (rankStat <= 0 || rankStat >= 13 || shouldbreak) {
+                                            if ((rankStat + modifier) <= 0 || (rankStat + modifier) >= 13 || shouldbreak) {
                                                 break;
                                             }
                                         }
