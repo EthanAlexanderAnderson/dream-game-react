@@ -197,8 +197,14 @@ io.on("connection", (socket) => {
         // memory correct
         stats = stats.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === name && dreamer === name ? parseInt(el) + 1 : el));
         // correct rank evaluation
-        let currentDreamDifficulty = parseFloat(difficulty[buffer[buffer.length-1]]).toFixed(2);
-        let SRo = parseFloat(stats[statindex][7]).toFixed(2);
+        let currentDreamDifficulty = difficulty[buffer[buffer.length-1]];
+        if (typeof currentDreamDifficulty !== "number"){
+            currentDreamDifficulty = parseFloat(difficulty[buffer[buffer.length-1]]).toFixed(2);
+        }
+        let SRo = stats[statindex][7];
+        if (typeof SRo !== "number"){
+            SRo = parseFloat(stats[statindex][7]).toFixed(2);
+        }
         console.log("SRo: "+ SRo);
         console.log("SRn: "+ SRo + " + abs(" +  SRo + " - Math.max(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         console.log( "SRn: "+ (SRo + Math.abs( (SRo - Math.max(SRo, currentDreamDifficulty)) * 0.1 )) );
@@ -311,8 +317,14 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? parseInt(el) - 10 : el));
         }
         // incorrect rank evaluation
-        let currentDreamDifficulty = parseFloat(difficulty[buffer[buffer.length-1]]).toFixed(2);
-        let SRo = parseFloat(stats[statindex][7]).toFixed(2);
+        let currentDreamDifficulty = difficulty[buffer[buffer.length-1]];
+        if (typeof currentDreamDifficulty !== "number"){
+            currentDreamDifficulty = parseFloat(difficulty[buffer[buffer.length-1]]).toFixed(2);
+        }
+        let SRo = stats[statindex][7];
+        if (typeof SRo !== "number"){
+            SRo = parseFloat(stats[statindex][7]).toFixed(2);
+        }
         console.log("SRo: "+ SRo);
         console.log("SRn: "+ SRo + " - abs(" +  SRo + " - Math.min(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         console.log("SRn: "+ (SRo - Math.abs( SRo - Math.min(SRo, currentDreamDifficulty)) * 0.1 ));
