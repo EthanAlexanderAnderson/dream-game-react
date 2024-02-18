@@ -94,13 +94,24 @@ function App() {
   }
 
   const getRandomDreamD = (data) => {
-    setRoundNumber(data.roundNumber);
+    // input validation on data
+    if (typeof data.dreamDifficulty !== 'number') {
+      console.log("difficulty is not a number: " + data.dreamDifficulty + " type: " + typeof data.dreamDifficulty);
+    }
+    if (typeof data.roundNumber !== 'number') {
+      console.log("round number is not a number: " + data.roundNumber + " type: " + typeof data.roundNumber);
+    } else {
+      setRoundNumber(data.roundNumber);
+    }
+
     setTextSection(data.dream);
     setResultSection("");
     setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
-    //setDifficulty(data.dreamDifficulty);
-    console.log("difficulty: " + data.dreamDifficulty);
+
+    console.log("round number: "+ data.roundNumber + " difficulty: " + data.dreamDifficulty);
+
+
     if (data.dreamDifficulty <= -3) {
       setDifficultyString("Trivial");
     } else if (data.dreamDifficulty >= -2 && data.dreamDifficulty <= 0) { 

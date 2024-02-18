@@ -496,9 +496,9 @@ async function updateRandomDream(type, socket){
         dream = redisResult;
         await fetch("&dreamer"+rng);
         dreamer = redisResult;
-        io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber} );
+        io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
     } else {
-        socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance } );
+        socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
     }
 }
 
