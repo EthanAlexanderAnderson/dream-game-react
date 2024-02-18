@@ -220,7 +220,7 @@ io.on("connection", (socket) => {
         client.set(("%"+name),temp.join(","));
         
 
-        // BONUSES 
+        // BONUSES
         // underdog bonus 
         let underdogData = scores.sort((a, b) => b[2] - a[2]);
         let underdogCount = 0;
@@ -236,6 +236,10 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Underdog x"+underdogCount, underdogCount]]) : el));
         }
         // streak bonus
+        // if undefined, set 0
+        if (scores[scoreindex][5] === 'undefined' || scores[scoreindex][5] === null) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
+        }
         if (scores[scoreindex][5] >= 5) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Streak x"+scores[scoreindex][5], (Math.floor(parseInt(scores[scoreindex][5])/5))]]) : el));
@@ -331,6 +335,10 @@ io.on("connection", (socket) => {
         io.emit("update_stats", stats);
 
         // BONUSES
+        // if undefined, set 0
+        if (scores[scoreindex][5] === 'undefined' || scores[scoreindex][5] === null) {
+            scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
+        }
         // reset streak
         if (scores[scoreindex][5] > 0) {
             if (scores[scoreindex][5] >= 5) {
