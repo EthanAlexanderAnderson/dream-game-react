@@ -67,6 +67,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
               placeholder="Password"
               onChange={handleChange}
               value={message}
+              autoFocus
             />
           </div>
         );
