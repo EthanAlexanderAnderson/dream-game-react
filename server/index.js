@@ -237,10 +237,10 @@ io.on("connection", (socket) => {
         }
         // streak bonus
         // if undefined, set 0
-        if (scores[scoreindex] === 'undefined' || scores[scoreindex] === null) {
+        if (scores[scoreindex] === undefined || scores[scoreindex] === null) {
             scores[scoreindex] = [socket.id, name, 0, "Waiting...", "null", 0, 0, [], 0];
         }
-        if (scores[scoreindex][5] === 'undefined' || scores[scoreindex][5] === null) {
+        if (scores[scoreindex] && (scores[scoreindex][5] === undefined || scores[scoreindex][5] === null)) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
         }
         if (scores[scoreindex][5] >= 5) {
@@ -339,10 +339,10 @@ io.on("connection", (socket) => {
 
         // BONUSES
         // if undefined, set 0
-        if (scores[scoreindex] === 'undefined' || scores[scoreindex] === null) {
+        if (scores[scoreindex] === undefined || scores[scoreindex] === null) {
             scores[scoreindex] = [socket.id, name, 0, "Waiting...", "null", 0, 0, [], 0];
         }
-        if (scores[scoreindex][5] === 'undefined' || scores[scoreindex][5] === null) {
+        if (scores[scoreindex] && (scores[scoreindex][5] === undefined || scores[scoreindex][5] === null)) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
         }
         // reset streak
