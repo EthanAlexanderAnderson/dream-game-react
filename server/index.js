@@ -393,6 +393,7 @@ async function fetch(key) {
 }
 var dream = "";
 var dreamer = "";
+var dreamDifficulty = null;
 var buffer = [];
 async function updateRandomDream(type, socket){
     if (type === "new") {
@@ -497,7 +498,7 @@ async function updateRandomDream(type, socket){
         if (buffer.length > 200) {
             buffer.shift();
         }
-        let dreamDifficulty = difficulty[rng];
+        dreamDifficulty = difficulty[rng];
         console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i);
         console.log("Buffer: " + buffer);
         await fetch("&dream"+rng);
