@@ -26,7 +26,7 @@ function MessageSection(props) {
     if (props.name !== "") {
         return (
             <div id="messageSection">
-                <div class="roundCount">Round: {props.roundNumber}</div>
+                <div className="roundCount">Round: {props.roundNumber}</div>
                 <div id="messageBox" className="message">
                     <ul>
                     {messages.map((item, index) => (
