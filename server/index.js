@@ -205,7 +205,6 @@ io.on("connection", (socket) => {
         if (typeof SRo !== "number"){
             SRo = parseFloat(stats[statindex][7]).toFixed(2);
         }
-        console.log("SRo: "+ SRo);
         console.log("SRn: "+ SRo + " + abs(" +  SRo + " - Math.max(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         console.log( "SRn: "+ (SRo + Math.abs( (SRo - Math.max(SRo, currentDreamDifficulty)) * 0.1 )) );
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? (parseFloat(el) + (Math.abs( (parseFloat(el) - Math.max(parseFloat(el), currentDreamDifficulty)) * 0.1 ))).toFixed(2) : el));
@@ -325,7 +324,6 @@ io.on("connection", (socket) => {
         if (typeof SRo !== "number"){
             SRo = parseFloat(stats[statindex][7]).toFixed(2);
         }
-        console.log("SRo: "+ SRo);
         console.log("SRn: "+ SRo + " - abs(" +  SRo + " - Math.min(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         console.log("SRn: "+ (SRo - Math.abs( SRo - Math.min(SRo, currentDreamDifficulty)) * 0.1 ));
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? (parseFloat(el) - (Math.abs( (parseFloat(el) - Math.min(parseFloat(el), currentDreamDifficulty)) * 0.1 ))).toFixed(2) : el));
@@ -400,10 +398,38 @@ async function updateRandomDream(type, socket){
 
         // progressive difficulty for first 70 rounds (quickplay mode)
         console.log("roundNumber: " + roundNumber);
+        /*
         if (roundNumber <= 70) {
             let lowerBounds;
             let upperBounds;
 
+            // let the first 1 be medium-hard to prevent refresh farming
+            if (roundNumber === 1){
+                lowerBounds = 4;
+                upperBounds = 9;
+            }
+            // the next 3 be trivial
+            else if (roundNumber < 5){
+                lowerBounds = -999;
+                upperBounds = -3;
+            }
+            // after that, we give a very hard every 10th round
+            else if (roundNumber % 10 === 0){
+                lowerBounds = 10;
+                upperBounds = 999;
+            }
+            // and an easy one every 5th round
+            else if (roundNumber % 5 === 0){
+                lowerBounds = -999;
+                upperBounds = 3;
+            }
+            // else, slowly increase diff
+            else {
+                lowerBounds = -3 + Math.floor(roundNumber/5);
+                upperBounds = 6 + Math.floor(roundNumber/5);
+            }
+
+            /*
             if (roundNumber <= 10){
                 lowerBounds = -999;
                 upperBounds = -3;
@@ -428,7 +454,7 @@ async function updateRandomDream(type, socket){
                 lowerBounds = 10;
                 upperBounds = 999;
             }
-            /*
+            
             this is commented out until we have more impossible dreams
             else if (roundNumber <= 60){
                 lowerBounds = 10;
@@ -438,7 +464,7 @@ async function updateRandomDream(type, socket){
                 lowerBounds = 13;
                 upperBounds = 999;
             }
-            */
+            
             while (buffer.includes(rng) || 
             ((difficulty[rng] < lowerBounds || difficulty[rng] > upperBounds) && i < 2000)
             ) {
@@ -446,17 +472,17 @@ async function updateRandomDream(type, socket){
                 i++;
             }
         }
+        */
         // regular old gameplay (freeplay mode)
-        else {
-            while (buffer.includes(rng) || 
-            ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 25) || 
-            ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 30) ||
-            ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 35) ||
-            ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 40)
-            ) {
-                rng = Math.floor(Math.random() * Math.floor(count));
-                i++;
-            }
+        
+        while (buffer.includes(rng) || 
+        ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 10) || 
+        ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 15) ||
+        ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 20) ||
+        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 25)
+        ) {
+            rng = Math.floor(Math.random() * Math.floor(count));
+            i++;
         }
 
         buffer.push(rng);
