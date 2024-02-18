@@ -247,3 +247,13 @@ li {
     background-color: #9d00ff;
     rotate: 90deg;
 }
+
+.legend {
+    background-color: #444444
+}
+
+.note {
+    font-size: 0.8em;
+    color: #AAAAAA;
+    font-style: italic;
+}

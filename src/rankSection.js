@@ -81,8 +81,92 @@ function RankSection({ stats, PFPs }) {
                                             <td key={item[0] + "name"}>{item[0]}</td>
                                             <td key={item[0] + "rank" }>{rank}</td>
                                         </tr>
+                                        // add explaination of ranks
                                     );
                                 })}
+                                <tr key="Rank Legend" className='legend'>
+                                    <td key="Rank Legend:" colSpan="2">Rank Legend:</td>
+                                </tr>
+                                <tr key="Coal" className='legend'>
+                                    <td key="Coal Label">Coal</td>
+                                    <td key="Coal Image Row">
+                                        <img className="rank coal" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Bronze" className='legend'>
+                                    <td key="Bronze Label">Bronze</td>
+                                    <td key="Bronze Image Row">
+                                        <img className="rank bronze" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank bronze" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank bronze" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank bronze" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank bronze" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank bronze" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Silver" className='legend'>
+                                    <td key="Silver Label">Silver</td>
+                                    <td key="Silver Image Row">
+                                        <img className="rank silver" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank silver" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank silver" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank silver" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank silver" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank silver" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Gold" className='legend'>
+                                    <td key="Gold Label">Gold</td>
+                                    <td key="Gold Image Row">
+                                        <img className="rank gold" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank gold" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank gold" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank gold" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank gold" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank gold" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Emerald" className='legend'>
+                                    <td key="Emerald Label">Emerald</td>
+                                    <td key="Emerald Image Row">
+                                        <img className="rank emerald" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank emerald" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank emerald" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank emerald" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank emerald" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank emerald" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Diamond" className='legend'>
+                                    <td key="Diamond Label">Diamond</td>
+                                    <td key="Diamond Image Row">
+                                        <img className="rank diamond" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank diamond" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank diamond" src="rank.png" alt="rank tick"></img>
+                                        <span> . </span>
+                                        <img className="rank diamond" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank diamond" src="rank.png" alt="rank tick"></img>
+                                        <img className="rank diamond" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Omnipotent" className='legend'>
+                                    <td key="Omnipotent Label">Omnipotent</td>
+                                    <td key="Omnipotent Image Row">
+                                        <img className="rank omnipotent" src="rank.png" alt="rank tick"></img>
+                                    </td>
+                                </tr>
+                                <tr key="Note" className='note'>
+                                    <td key="Note Text" colSpan="2">( gold ≈ medium )</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

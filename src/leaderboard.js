@@ -42,6 +42,16 @@ function Leaderboard({ stats, PFPs }) {
                                         </tr>
                                     );
                                 })}
+                                <tr key="Leaderboard Legend" className='legend'>
+                                    <td key="Leaderboard Legend:" colSpan="2">Leaderboard Legend:</td>
+                                </tr>
+                                <tr key="Leaderboard Legend 1" className='note'>
+                                    <td key="Leaderboard Legend 1" colSpan="2">
+                                        The leaderboard ranks players based on skill rating. The skill rating is calculated as follows:<br></br><br></br>
+                                        R * ( ( C / 10 ) + S )<br></br><br></br>
+                                        Where R is correct ratio, C is number of correct answers, and S is longest streak.<br></br>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
