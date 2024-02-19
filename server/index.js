@@ -490,18 +490,25 @@ async function updateRandomDream(type, socket){
         */
         // regular old gameplay (freeplay mode)
         
+        // we want to favor dreams closer to the middle/default of the difficulty spectrum (5)
         while (buffer.includes(rng) || 
         ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 10) || 
         ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 15) ||
         ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 20) ||
-        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 25)
+        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 25) ||
+        ((difficulty[rng] < 0 || difficulty[rng] > 10) && i < 30)||
+        ((difficulty[rng] < -1 || difficulty[rng] > 11) && i < 35)||
+        ((difficulty[rng] < -2 || difficulty[rng] > 12) && i < 40)||
+        ((difficulty[rng] < -3 || difficulty[rng] > 13) && i < 45)||
+        ((difficulty[rng] < -4 || difficulty[rng] > 14) && i < 50)||
+        ((difficulty[rng] < -5 || difficulty[rng] > 15) && i < 500)
         ) {
             rng = Math.floor(Math.random() * Math.floor(count));
             i++;
         }
 
         buffer.push(rng);
-        if (buffer.length > 200) {
+        if (buffer.length > 300) {
             buffer.shift();
         }
         dreamDifficulty = difficulty[rng];
