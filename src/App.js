@@ -31,6 +31,7 @@ function App() {
   const [textSectionTwo, setTextSectionTwo] = useState("");
   const [resultSection, setResultSection] = useState("");
   const [difficultyString, setDifficultyString] = useState("");
+  var difficulty = 5;
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("password");
@@ -96,7 +97,7 @@ function App() {
   const getRandomDreamD = (data) => {
     // input validation on data
     if (typeof data.dreamDifficulty !== 'number') {
-      console.log("difficulty is not a number: " + data.dreamDifficulty + " type: " + typeof data.dreamDifficulty);
+      //console.log("difficulty is not a number: " + data.dreamDifficulty + " type: " + typeof data.dreamDifficulty);
     }
     if (typeof data.roundNumber !== 'number') {
       console.log("round number is not a number: " + data.roundNumber + " type: " + typeof data.roundNumber);
@@ -111,7 +112,7 @@ function App() {
 
     console.log("round number: "+ data.roundNumber + " difficulty: " + data.dreamDifficulty);
 
-
+    difficulty = data.dreamDifficulty;
     if (data.dreamDifficulty <= -3) {
       setDifficultyString("Trivial");
     } else if (data.dreamDifficulty >= -2 && data.dreamDifficulty <= 0) { 
@@ -131,7 +132,6 @@ function App() {
     }
     answer = data.dreamer;
     myGuess = "";
-    setTimerTrigger(true);
 
     if (gnome) {
       const split = data.dream.split(' ');
@@ -147,6 +147,10 @@ function App() {
         }
       }
     }
+    else {
+      setTextSectionTwo("");
+    }
+    setTimerTrigger(true);
   }
 
   // when all players guessed
@@ -254,9 +258,11 @@ function App() {
           <div id='difficultyText'>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
         </div>
 
+        {(10+Math.floor((textSection + textSectionTwo).length/20))}
+
         <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
-        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick}/>
+        <Timer name={name} stats={stats} difficulty={difficulty} initialSeconds={(Math.floor((textSection + textSectionTwo).length/20))} timerIsRunning={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 
