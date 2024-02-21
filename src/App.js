@@ -245,7 +245,7 @@ function App() {
           {textSection}
           {answer === "Gnome" && (status === "during" || status === "guessed")  ? (
           <>
-            <button id="hidingGnome" onClick={() => guess("Gnome")}>gnome</button> {textSectionTwo}
+            <button id="hidingGnome" onClick={() => guess("Gnome")} disabled={status === "guessed"}>gnome</button> {textSectionTwo}
           </>
           ) : "" }
         </div>

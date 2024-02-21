@@ -129,7 +129,11 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("guess", (guess) => { 
+    socket.on("guess", (guess) => {
+        // break if undefined
+        if ( getName(socket) === undefined ) {
+            return;
+        }
         console.log("server side recieved guess of:" + guess + "  From guesser: " + getName(socket));
         guessCount++;
         console.log("Guess Count: " + guessCount); 
@@ -208,7 +212,7 @@ io.on("connection", (socket) => {
         //console.log("SRn: "+ SRo + " + abs(" +  SRo + " - Math.max(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         //console.log( "SRn: "+ (SRo + Math.abs( (SRo - Math.max(SRo, currentDreamDifficulty)) * 0.1 )) );
         let SRn = (SRo + Math.abs(currentDreamDifficulty - SRo)**(Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
-        console.log("SRo: " + SRo + "   -->   SRn: "+ SRn);
+        console.log(name + " SRo: " + SRo + "   -->   SRn: "+ SRn);
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) + Math.abs(currentDreamDifficulty - (parseFloat(el)))**(Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
         // wrap up stat stuff
         console.log(stats[statindex]);  //rank exist here btw
@@ -336,7 +340,7 @@ io.on("connection", (socket) => {
         //console.log("SRn: "+ SRo + " - abs(" +  SRo + " - Math.min(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         //console.log("SRn: "+ (SRo - Math.abs( SRo - Math.min(SRo, currentDreamDifficulty)) * 0.1 ));
         let SRn = (SRo - Math.abs(currentDreamDifficulty - SRo)**(-Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
-        console.log("SRo: " + SRo + "   -->   SRn: " + SRn);
+        console.log(name + " SRo: " + SRo + "   -->   SRn: " + SRn);
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) - Math.abs(currentDreamDifficulty - (parseFloat(el)))**(-Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
         console.log(stats[statindex]);
         io.emit("update_stats", stats);
