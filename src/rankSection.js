@@ -164,8 +164,11 @@ function RankSection({ stats, PFPs }) {
                                         <img className="rank omnipotent" src="rank.png" alt="rank tick"></img>
                                     </td>
                                 </tr>
-                                <tr key="Note" className='note'>
-                                    <td key="Note Text" colSpan="2">( gold ≈ medium )</td>
+                                <tr key="Note1" className='note'>
+                                    <td key="Note1 Text" colSpan="2">( gold ≈ medium )</td>
+                                </tr>
+                                <tr key="Note2" className='note'>
+                                    <td key="Note2 Text" colSpan="2">Ranks are not connected to Skill Rating. Rank is determined by your performance against dreams of various difficulties. Basically Elo.</td>
                                 </tr>
                             </tbody>
                         </table>
