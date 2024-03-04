@@ -215,7 +215,7 @@ io.on("connection", (socket) => {
         console.log(name + " SRo: " + SRo + "   -->   SRn: "+ SRn);
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) + Math.abs(currentDreamDifficulty - (parseFloat(el)))**(Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
         // wrap up stat stuff
-        console.log(stats[statindex]);  //rank exist here btw
+        console.log(stats[statindex].join(", "));
         io.emit("update_stats", stats);
         let temp = []
         // remove socket id and/or name from database push
@@ -342,7 +342,7 @@ io.on("connection", (socket) => {
         let SRn = (SRo - Math.abs(currentDreamDifficulty - SRo)**(-Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
         console.log(name + " SRo: " + SRo + "   -->   SRn: " + SRn);
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) - Math.abs(currentDreamDifficulty - (parseFloat(el)))**(-Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
-        console.log(stats[statindex]);
+        console.log(stats[statindex].join(", "));
         io.emit("update_stats", stats);
 
         // BONUSES
