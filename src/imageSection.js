@@ -8,7 +8,8 @@ function ImageSection({image, status}) {
     } 
     // else, generate AI image
     else {
-        link = "https://image.pollinations.ai/prompt/"+image.split("_").join("%20") + "%20" + Math.floor(Math.random() * 100) + "?model=deliberate";
+        // add the current day to the image link to get a new image everyday
+        link = "https://image.pollinations.ai/prompt/"+image.split("_").join("%20") + "%20" + new Date().getDate() + "?model=deliberate";
     }
     
     // only show image while people are guessing
