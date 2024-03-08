@@ -25,8 +25,8 @@ function RankSection({ stats, PFPs }) {
                                 {stats.map((item) => { 
                                     let rank = [];
                                     //console.log(item);
-                                    if (item[7] !== undefined && item[7] !== null && item[7] !== "" && !isNaN(item[7])) {
-                                        let rankStat;
+                                                                        if (item[7] !== undefined && item[7] !== null && item[7] !== "" && !isNaN(item[7])) {
+let rankStat;
                                         if (typeof item[7] === 'number') {
                                             //console.log(item[0] + "'s rank is a number: " + item[7] + ". rounding to: " + Math.floor(item[7]));
                                             rankStat = Math.floor(item[7]);
@@ -79,7 +79,7 @@ function RankSection({ stats, PFPs }) {
                                     return (
                                         <tr key={item[0] + "Row"}>
                                             <td key={item[0] + "name"}>{item[0]}</td>
-                                            <td key={item[0] + "rank" }>{rank}</td>
+                                            <td key={item[0] + "rank"} title={item[7]}>{rank}</td>
                                         </tr>
                                         // add explaination of ranks
                                     );

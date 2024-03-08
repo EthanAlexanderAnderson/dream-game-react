@@ -34,11 +34,11 @@ function PlayerSection(props) {
                 }
                 // if rank is a number, round
                 if (typeof stats[j][7] === 'number') {
-                    temp[8] = Math.floor(stats[j][7]);
+                    temp[8] = stats[j][7];
                 } 
                 // if not a number, try to parse and round
                 else {
-                    temp[8] = Math.floor(parseFloat(stats[j][7]));
+                    temp[8] = parseFloat(stats[j][7]);
                     if (isNaN(temp[8])) {
                         console.log(temp[1] + "'s rank is not a number: " + temp[8] + " type: " + typeof temp[8]);
                     }
@@ -99,6 +99,8 @@ function PlayerSection(props) {
                                 }
                                 let rank = [];
                                 // rank
+                                let unflooredRank = item[8];
+                                item[8] = Math.floor(item[8]);
                                 if (item[8] !== undefined && item[8] !== null && item[8] !== "") {
                                     let rankcategory = "";
                                     // decide the rank category
@@ -129,7 +131,7 @@ function PlayerSection(props) {
                                     }
                                     // decide how many ticks to show
                                     for (let i = 0; i < (((item[8] + modifier) - 1) % 3 + 1); i++) {
-                                        rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png" alt='rank tick'></img>;
+                                        rank[i] = <img key={item[1] + "rank" + i} className={`rank ${rankcategory}`} src="rank.png" alt='rank tick' title={unflooredRank}></img>;
                                         // coal and omnipotent can onlt have 1 tick
                                         if ((item[8] + modifier) <= 0 || (item[8] + modifier) >= 13 || shouldbreak) {
                                             break;
