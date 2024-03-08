@@ -306,18 +306,8 @@ io.on("connection", (socket) => {
     socket.on("incorrect", (name) => {
         let statindex = -1;
         let scoreindex = -1;
-        for (let i = 0; i < scores.length; i++) {
-            if (scores[i][1] === name) {
-                scoreindex = i;
-                break;
-            }
-        }
-        for (let i = 0; i < stats.length; i++) {
-            if (stats[i][0] === name) {
-                statindex = i;
-                break;
-            }
-        }
+        let dreamerindex = -1;
+        [statindex, scoreindex, dreamerindex] = setIndexes(name);
         // STATS
         // incorrect guesses stat
         stats = stats.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === name ? parseInt(el) + 1 : el));
