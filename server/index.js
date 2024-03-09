@@ -491,25 +491,27 @@ async function updateRandomDream(type, socket){
         
         // we want to favor dreams closer to the average rank of players in the game
         let averageRank = 0;
-        if (stats.length > 0){
+        if (scores.length > 0){
             for (let i = 0; i < stats.length; i++){
-                // if its a string convert to floating point number
-                if (typeof stats[i][7] === "string") {
-                    stats[i][7] = parseFloat(stats[i][7]);
-                }
-                else {
-                    averageRank += stats[i][7];
+                // if the players whose rank we're looking at is in the game (in scores), count it towards the average
+                if (scores.some(item => item[1] === stats[i][0])){
+                    // if its a string convert to floating point number
+                    let rank = stats[i][7];
+                    if (typeof stats[i][7] === "string") {
+                        rank = parseFloat(stats[i][7]);
+                    }
+                    averageRank += rank;
                 }
             }
-            averageRank = averageRank / stats.length;
+            averageRank = averageRank / scores.length;
         } else {
-            console.log("ERROR: stats.length is not greater than 0: " + stats.length);
+            console.log("ERROR: scores.length is not greater than 0: " + scores.length);
             averageRank = 5;
         }
 
         // if not a number or null or undefined or under -5 or over 15, set to 5
         if (isNaN(averageRank) || averageRank === null || averageRank === undefined || averageRank < -5 || averageRank > 15){
-            console.log("ERROR: averageRank is: " + averageRank + " with " + stats.length + " players. Setting to 5.");
+            console.log("ERROR: averageRank is: " + averageRank + " with " + scores.length + " players. Setting to 5.");
             averageRank = 5;
         }
         // slowly increase bounds until we find a dream

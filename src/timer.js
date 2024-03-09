@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 function Timer({ trigger, guess, myGuess, status, disableRandomButton, position, tick, difficulty, rank}) {
     const [added, setAdded] = useState(false); // this a switch to prevent the timer from adding length-based-time more than once
+    const [seconds, setSeconds] = useState(10);
 
     let equityDisables = [];
     // disable buttons at percentage of timer intervals (no disables after 80% of timer to discourage stalling)
