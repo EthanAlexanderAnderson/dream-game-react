@@ -16,7 +16,11 @@ var myGuess = "";
 var answer = "";
 var gnome = false;
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+// these three variables are used to calculate the timer intervals
 let position = 0;
+let difficulty = 0;
+let rank = 999;
+
 const gnomeSFX = new Audio('gnome.mp3');
 // ping sound effect by AndreWharn
 const ping = new Audio('ping.mp3');
@@ -38,7 +42,7 @@ function App() {
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
   const [PFPs, setPFPs] = useState([]);
-  const [timerTrigger, setTimerTrigger] = useState(false);
+  const [timerTrigger, setTimerTrigger] = useState(0);
   const [disabled, setDisabled] = useState([]);
   const [gnomeButtonStatus, setGnomeButtonStatus] = useState(false);
   const [roundNumber, setRoundNumber] = useState(0);
@@ -75,7 +79,7 @@ function App() {
     myGuess = data;
     socket.emit("guess", myGuess);
     setStatus("guessed");
-    setTimerTrigger(false);
+    setTimerTrigger(0);
   }
 
   // send message to socket
@@ -131,7 +135,14 @@ function App() {
     }
     answer = data.dreamer;
     myGuess = "";
-    setTimerTrigger(true);
+    difficulty = data.dreamDifficulty;
+    setTimerTrigger(Math.floor(data.dream.length/15));
+    for (let i = 0; i < stats.length; i++) {
+      if (stats[i][0] === name){
+        rank = stats[i][7];
+      }
+    }
+    console.log("rank: " + rank + " difficulty: " + difficulty);
 
     if (gnome) {
       const split = data.dream.split(' ');
@@ -189,8 +200,10 @@ function App() {
 
   const disableRandomButton = () => {
     let randomNumber = Math.floor(Math.random() * 13);
-    while (names[randomNumber] === answer || disabled.includes(randomNumber)) {
+    let attemps = 0;
+    while ((names[randomNumber] === answer || disabled.includes(randomNumber)) && attemps < 1000) {
       randomNumber = Math.floor(Math.random() * 13);
+      attemps++;
     }
     setDisabled(prevArray => [...prevArray, randomNumber]);
     setDisabled(prevArray => [...prevArray].sort((a, b) => a - b));
@@ -256,7 +269,7 @@ function App() {
 
         <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
-        <Timer initialSeconds={30} trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick}/>
+        <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick} difficulty={difficulty} rank={rank}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 

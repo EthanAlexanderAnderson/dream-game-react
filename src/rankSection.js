@@ -25,8 +25,8 @@ function RankSection({ stats, PFPs }) {
                                 {stats.map((item) => { 
                                     let rank = [];
                                     //console.log(item);
-                                                                        if (item[7] !== undefined && item[7] !== null && item[7] !== "" && !isNaN(item[7])) {
-let rankStat;
+                                    if (item[7] !== undefined && item[7] !== null && item[7] !== "" && !isNaN(item[7])) {
+                                        let rankStat;
                                         if (typeof item[7] === 'number') {
                                             //console.log(item[0] + "'s rank is a number: " + item[7] + ". rounding to: " + Math.floor(item[7]));
                                             rankStat = Math.floor(item[7]);

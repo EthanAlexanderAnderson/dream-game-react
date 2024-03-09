@@ -36,7 +36,7 @@ let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
 let scores = [];
-let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr ]
+let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr, 7rank ]
 let difficulty = [];
 let status = "before";
 let bottomFeeder = {
@@ -83,8 +83,7 @@ io.on("connection", (socket) => {
         }
         scores = scores.filter(subArr => !subArr.includes(socket.id));
         io.emit("update_scores", scores);
-        console.log("Player Count: " + playerCount)
-        console.log("Guess Count: " + guessCount);;
+        console.log("Player Count: " + playerCount + " --- Guess Count: " + guessCount);
       });
   
     // After new player selects their name
@@ -134,9 +133,8 @@ io.on("connection", (socket) => {
         if ( getName(socket) === undefined ) {
             return;
         }
-        console.log("server side recieved guess of:" + guess + "  From guesser: " + getName(socket));
+        console.log("Guess #" + guessCount + "   Of:" + guess + "   From guesser: " + getName(socket));
         guessCount++;
-        console.log("Guess Count: " + guessCount); 
         setReady(socket, "Ready");
         setGuess(socket, guess);
         scores = scores.map(subArr => subArr.map((el, i) => i === 6 && subArr[0] === socket.id ? subArr[2] : el)); // scorePrev
@@ -297,7 +295,11 @@ io.on("connection", (socket) => {
         }
 
         // DIFFICULTY
-        difficulty[buffer[buffer.length-1]]--;
+        // only decrease difficulty if the players rank is lower than the dreamer
+        // TODO change this to use rank formula after testing non-int dream difficulties
+        if (SRn < dreamDifficulty) {
+            difficulty[buffer[buffer.length-1]]--;
+        }
         client.set(("%difficulty"),difficulty.join(","));
         
         io.emit("update_scores", scores);
@@ -367,14 +369,13 @@ io.on("connection", (socket) => {
         }
 
         // DIFFICULTY
-        difficulty[buffer[buffer.length-1]]++;
+        // only increase difficulty if the players rank is higher than the dreamer
+        // TODO change this to use rank formula after testing non-int dream difficulties
+        if (SRn > dreamDifficulty) {
+            difficulty[buffer[buffer.length-1]]++;
+        }
         client.set(("%difficulty"),difficulty.join(","));
 
-        io.emit("update_scores", scores);
-    });
-
-    socket.on("increment_score", (name) => {
-        scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? el + 1 : el));
         io.emit("update_scores", scores);
     });
 
@@ -488,19 +489,19 @@ async function updateRandomDream(type, socket){
         */
         // regular old gameplay (freeplay mode)
         
-        // we want to favor dreams closer to the middle/default of the difficulty spectrum (5)
-        while (buffer.includes(rng) || 
-        ((difficulty[rng] < 4 || difficulty[rng] > 6) && i < 10) || 
-        ((difficulty[rng] < 3 || difficulty[rng] > 7) && i < 15) ||
-        ((difficulty[rng] < 2 || difficulty[rng] > 8) && i < 20) ||
-        ((difficulty[rng] < 1 || difficulty[rng] > 9) && i < 25) ||
-        ((difficulty[rng] < 0 || difficulty[rng] > 10) && i < 30)||
-        ((difficulty[rng] < -1 || difficulty[rng] > 11) && i < 35)||
-        ((difficulty[rng] < -2 || difficulty[rng] > 12) && i < 40)||
-        ((difficulty[rng] < -3 || difficulty[rng] > 13) && i < 45)||
-        ((difficulty[rng] < -4 || difficulty[rng] > 14) && i < 50)||
-        ((difficulty[rng] < -5 || difficulty[rng] > 15) && i < 500)
-        ) {
+        // we want to favor dreams closer to the average rank of players in the game
+        let averageRank = 0;
+        for (let i = 0; i < stats.length; i++) {
+            averageRank += parseFloat(stats[i][7]);
+        }
+        averageRank = averageRank / stats.length;
+        // if not a number or null or undefined or under -5 or over 15, set to 5
+        if (isNaN(averageRank) || averageRank === null || averageRank === undefined || averageRank < -5 || averageRank > 15){
+            averageRank = 5;
+        }
+        // slowly increase bounds until we find a dream
+        while ( buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)) ) 
+        {
             rng = Math.floor(Math.random() * Math.floor(count));
             i++;
         }
