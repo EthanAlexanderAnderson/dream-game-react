@@ -491,12 +491,25 @@ async function updateRandomDream(type, socket){
         
         // we want to favor dreams closer to the average rank of players in the game
         let averageRank = 0;
-        for (let i = 0; i < stats.length; i++) {
-            averageRank += parseFloat(stats[i][7]);
+        if (stats.length > 0){
+            for (let i = 0; i < stats.length; i++){
+                // if its a string convert to floating point number
+                if (typeof stats[i][7] === "string") {
+                    stats[i][7] = parseFloat(stats[i][7]);
+                }
+                else {
+                    averageRank += stats[i][7];
+                }
+            }
+            averageRank = averageRank / stats.length;
+        } else {
+            console.log("ERROR: stats.length is not greater than 0: " + stats.length);
+            averageRank = 5;
         }
-        averageRank = averageRank / stats.length;
+
         // if not a number or null or undefined or under -5 or over 15, set to 5
         if (isNaN(averageRank) || averageRank === null || averageRank === undefined || averageRank < -5 || averageRank > 15){
+            console.log("ERROR: averageRank is: " + averageRank + " with " + stats.length + " players. Setting to 5.");
             averageRank = 5;
         }
         // slowly increase bounds until we find a dream
@@ -511,7 +524,7 @@ async function updateRandomDream(type, socket){
             buffer.shift();
         }
         dreamDifficulty = difficulty[rng];
-        console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i);
+        console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i + ". Average Rank: " + averageRank);
         console.log("Buffer: " + buffer);
         await fetch("&dream"+rng);
         dream = redisResult;
