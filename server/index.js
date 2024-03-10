@@ -209,9 +209,9 @@ io.on("connection", (socket) => {
         }
         //console.log("SRn: "+ SRo + " + abs(" +  SRo + " - Math.max(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         //console.log( "SRn: "+ (SRo + Math.abs( (SRo - Math.max(SRo, currentDreamDifficulty)) * 0.1 )) );
-        let SRn = (SRo + Math.abs(currentDreamDifficulty - SRo)**(Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
+        let SRn = (SRo + Math.max(1, Math.abs(currentDreamDifficulty - SRo))**(Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
         console.log(name + " SRo: " + SRo + "   -->   SRn: "+ SRn);
-        stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) + Math.abs(currentDreamDifficulty - (parseFloat(el)))**(Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
+        stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) + Math.max(1, Math.abs(currentDreamDifficulty - (parseFloat(el))))**(Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
         // wrap up stat stuff
         console.log(stats[statindex].join(", "));
         io.emit("update_stats", stats);
@@ -331,9 +331,9 @@ io.on("connection", (socket) => {
         }
         //console.log("SRn: "+ SRo + " - abs(" +  SRo + " - Math.min(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         //console.log("SRn: "+ (SRo - Math.abs( SRo - Math.min(SRo, currentDreamDifficulty)) * 0.1 ));
-        let SRn = (SRo - Math.abs(currentDreamDifficulty - SRo)**(-Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
+        let SRn = (SRo - Math.max(1, Math.abs(currentDreamDifficulty - SRo))**(-Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
         console.log(name + " SRo: " + SRo + "   -->   SRn: " + SRn);
-        stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) - Math.abs(currentDreamDifficulty - (parseFloat(el)))**(-Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
+        stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) - Math.max(1, Math.abs(currentDreamDifficulty - (parseFloat(el))))**(-Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
         console.log(stats[statindex].join(", "));
         io.emit("update_stats", stats);
 
@@ -525,7 +525,7 @@ async function updateRandomDream(type, socket){
         if (buffer.length > 300) {
             buffer.shift();
         }
-        dreamDifficulty = difficulty[rng];
+        dreamDifficulty = parseInt(difficulty[rng]);
         console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i + ". Average Rank: " + averageRank);
         console.log("Buffer: " + buffer);
         await fetch("&dream"+rng);
