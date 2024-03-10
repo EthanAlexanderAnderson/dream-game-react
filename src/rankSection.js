@@ -24,11 +24,9 @@ function RankSection({ stats, PFPs }) {
                             <tbody>
                                 {stats.map((item) => { 
                                     let rank = [];
-                                    //console.log(item);
                                     if (item[7] !== undefined && item[7] !== null && item[7] !== "" && !isNaN(item[7])) {
                                         let rankStat;
                                         if (typeof item[7] === 'number') {
-                                            //console.log(item[0] + "'s rank is a number: " + item[7] + ". rounding to: " + Math.floor(item[7]));
                                             rankStat = Math.floor(item[7]);
 
                                         } else {
@@ -36,7 +34,6 @@ function RankSection({ stats, PFPs }) {
                                             if (isNaN(rankStat)) {
                                                 console.log(item[0] + "'s rank is not a number: " + item[7] + " type: " + typeof item[7]);
                                             }
-                                            //console.log(item[0] + "'s rank is not a number: " + item[7] + " type: " + typeof item[7]);
                                         }
                                         let rankcategory = "";
                                         // decide the rank category

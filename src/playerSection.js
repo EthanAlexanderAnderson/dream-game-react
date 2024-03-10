@@ -65,8 +65,6 @@ function PlayerSection(props) {
         colThree = "Status"
     }
 
-    //console.log(PFPs);
-
     if (name !== ""){
         if (Array.isArray(playerSection)) { 
             return (
