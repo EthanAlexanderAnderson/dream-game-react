@@ -283,7 +283,7 @@ function App() {
         </div>
 
         <div id='difficultySection'>
-          <div id='difficultyText'>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
+          <div id='difficultyText' title={difficulty}>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
         </div>
 
         <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
