@@ -13,7 +13,7 @@ function ImageSection({image, status}) {
     }
     
     // only show image while people are guessing
-    if (status === "during" || status === "guessed" ) {return (
+    if (image!== "" && (status === "during" || status === "guessed")) {return (
         <div id="imageSection">
             <img src={link} alt="" className="img-fluid"></img>
         </div>
