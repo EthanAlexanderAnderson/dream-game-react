@@ -23,7 +23,7 @@ function Timer({ trigger, guess, myGuess, status, disableRandomButton, position,
     if (averageScore > 2) {
         positionBasedHints = position;
     }
-    rankBasedHints = Math.floor(difficulty-rank);
+    rankBasedHints = Math.ceil(difficulty-rank);
     numberOfHints = Math.max(0, positionBasedHints, rankBasedHints, scoreBasedHints)
     //console.log("hints: " + numberOfHints + " positionBasedHints: " + positionBasedHints + " rankBasedHints: " + rankBasedHints + " scoreBasedHints: " + scoreBasedHints);
     // disable buttons at percentage of timer intervals (no disables after 80% of timer to discourage stalling) maximum 8 hints
@@ -31,7 +31,7 @@ function Timer({ trigger, guess, myGuess, status, disableRandomButton, position,
     let initialTime = Math.min(75, maxTime);
     for (let i = 0; i < numberOfHints; i++) {
         let secondsAfterInitalTime = Math.floor(initialTime * (0.1 * (i + 1))); // 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8
-        hintsArray.push(initialTime - secondsAfterInitalTime);
+        hintsArray.push(maxTime - secondsAfterInitalTime);
         if ( i >= 7) { break; }
     }
     //console.log(hintsArray);
