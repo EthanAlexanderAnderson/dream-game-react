@@ -38,12 +38,14 @@ function App() {
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState("password");
-  const [players, setPlayers] = useState([]); 
+  //const [players, setPlayers] = useState([]); 
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
   const [PFPs, setPFPs] = useState([]);
   const [timerTrigger, setTimerTrigger] = useState(0);
   const [disabled, setDisabled] = useState([]);
+  const [score, setScore] = useState(0);
+  const [averageScore, setAverageScore] = useState(0);
   const [gnomeButtonStatus, setGnomeButtonStatus] = useState(false);
   const [roundNumber, setRoundNumber] = useState(0);
 
@@ -54,7 +56,7 @@ function App() {
     // set name on user
     setName(name);
     // update player list on user
-    setPlayers(previous => [...previous, name])
+    //(previous => [...previous, name])
     // update player list on peers
     socket.emit("player_join", name);
   };
@@ -93,9 +95,9 @@ function App() {
     ping.play();
   }
 
-  const updatePlayers = (data) => {
-    setPlayers(previous => [...previous, data.data])
-  }
+  //const updatePlayers = (data) => {
+  //  setPlayers(previous => [...previous, data.data])
+  //}
 
   const getRandomDreamD = (data) => {
     // input validation on data
@@ -110,10 +112,9 @@ function App() {
 
     setTextSection(data.dream);
     setResultSection("");
-    setStatus("during");
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
 
-    console.log("round number: "+ data.roundNumber + " difficulty: " + data.dreamDifficulty);
+    //console.log("round number: "+ data.roundNumber + " difficulty: " + data.dreamDifficulty);
 
 
     if (data.dreamDifficulty <= -3) {
@@ -133,17 +134,34 @@ function App() {
     } else {
       setDifficultyString("Unknown");
     }
+
+    // for timer
     answer = data.dreamer;
     myGuess = "";
     difficulty = data.dreamDifficulty;
-    setTimerTrigger(Math.floor(data.dream.length/15));
+    // set timer length based on dream length
+    setTimerTrigger(Math.floor(data.dream.length/15)+1);
+    //console.log("timer trigger: " + Math.floor(data.dream.length/15));
+
     for (let i = 0; i < stats.length; i++) {
       if (stats[i][0] === name){
         rank = stats[i][7];
       }
     }
-    console.log("rank: " + rank + " difficulty: " + difficulty);
+    //console.log("rank: " + rank + " difficulty: " + difficulty);
+    // get player score and average score
+    let total = 0;
+    for (let i = 0; i < scores.length; i++) {
+      if (scores[i][1] === name){
+        position = i;
+      }
+      total += scores[i][2];
+    }
+    let average = total / scores.length;
+    setAverageScore(average);
+    setScore(scores[position][2]);
 
+    // gnome mode
     if (gnome) {
       const split = data.dream.split(' ');
       // if dream is long enough and 20% chance is reached (gnomeChance can be 0 to 4)
@@ -158,6 +176,7 @@ function App() {
         }
       }
     }
+    setStatus("during");
   }
 
   // when all players guessed
@@ -185,7 +204,7 @@ function App() {
     for (let i = 0; i < data.length; i++) {
       if (data[i][1] === name) {
           position = i;
-          console.log("name: " + name + "   pos: " + position);
+          //console.log("name: " + name + "   pos: " + position);
       }
     }
   }
@@ -220,7 +239,7 @@ function App() {
   useEffect(() => {
 
     socket.on("receive_message", receiveMessage);
-    socket.on("update_players", updatePlayers);
+    //socket.on("update_players", updatePlayers);
     socket.on("get_random_dream_d", getRandomDreamD);
     socket.on("all_guessed", allGuessed);
     socket.on("update_scores", updateScores);
@@ -269,7 +288,7 @@ function App() {
 
         <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
-        <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} tick={tick} difficulty={difficulty} rank={rank}/>
+        <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} difficulty={difficulty} rank={rank} score={score} averageScore={averageScore} tick={tick}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 

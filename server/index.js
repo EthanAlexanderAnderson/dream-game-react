@@ -89,7 +89,7 @@ io.on("connection", (socket) => {
     // After new player selects their name
     socket.on("player_join", (name) => {
         console.log(`User Connected: ${socket.id} ${name}`);
-        socket.broadcast.emit("update_players", name);
+        //socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
             // if no players connected when a player joins, reset round number
             if (playerCount === 0) {
