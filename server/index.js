@@ -94,6 +94,8 @@ io.on("connection", (socket) => {
             // if no players connected when a player joins, reset round number
             if (playerCount === 0) {
                 roundNumber = 0;
+                // and load saved buffer
+                loadBuffer();
             }
             playerCount++;
             // scores variable items: id, name, score, ready, guess, skillrating, scorePrev, bonus Array
@@ -525,6 +527,7 @@ async function updateRandomDream(type, socket){
         if (buffer.length > 300) {
             buffer.shift();
         }
+        client.set(("%buffer"),buffer.join(","));
         dreamDifficulty = parseInt(difficulty[rng]);
         console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i + ". Average Rank: " + averageRank);
         console.log("Buffer: " + buffer);
@@ -562,6 +565,11 @@ async function updatePFPs() {
 async function loadDifficulty() {
     await fetch("%difficulty");
     difficulty = redisResult.split(",");
+}
+
+async function loadBuffer() {
+    await fetch("%buffer");
+    buffer = redisResult.split(",");
 }
 
 // GETTERS AND SETTERS FOR scores VARIABLE
