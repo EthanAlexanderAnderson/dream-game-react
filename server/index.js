@@ -407,7 +407,6 @@ async function updateRandomDream(type, socket){
         roundNumber++;
         await fetch("&dreamcount");
         let count = parseInt(redisResult);
-        // generate random dream unseen for 200 length buffer
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
         // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
@@ -519,12 +518,17 @@ async function updateRandomDream(type, socket){
         // slowly increase bounds until we find a dream
         while ( buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)) ) 
         {
+            // special case: if dream is within the last 20 (increasing) most recently added, keep it regardless of difficulty/buffer
+            if (rng > count - (20 + i)){
+                break;
+            }
+
             rng = Math.floor(Math.random() * Math.floor(count));
             i++;
         }
 
         buffer.push(rng);
-        if (buffer.length > 300) {
+        if (buffer.length > 700) {
             buffer.shift();
         }
         client.set(("%buffer"),buffer.join(","));
