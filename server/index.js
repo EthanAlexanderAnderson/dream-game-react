@@ -222,9 +222,16 @@ io.on("connection", (socket) => {
         if (stats[statindex][0] === name) {
             temp = stats[statindex].slice(1, 8)
         }
-        // push to database
-        client.set(("%"+name),temp.join(","));
-        
+        // only push to database if the data is good (each value is a number, or a string representing a number)
+        if (temp.every((el) => !isNaN(el) || !isNaN(parseFloat(el)))) {
+            client.set(("%"+name),temp.join(","));
+        } else {
+            console.log("ERROR: stats data is not good: " + temp);
+            // if data is bad, likely its due to rank being NaN, so revert it to SRo if it's a number
+            if (!isNaN(stats[statindex][7]) || !isNaN(parseFloat(stats[statindex][7]))){
+                stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? SRo : el));
+            }
+        }
 
         // BONUSES
         // underdog bonus 
@@ -302,8 +309,20 @@ io.on("connection", (socket) => {
         if (SRn < dreamDifficulty) {
             difficulty[buffer[buffer.length-1]]--;
         }
-        client.set(("%difficulty"),difficulty.join(","));
-        
+        // make sure the dream we just changed is a valid number and between -5 and 15
+        if (difficulty[buffer[buffer.length-1]] >= -5 && difficulty[buffer[buffer.length-1]] <= 15) {
+            client.set(("%difficulty"),difficulty.join(","));
+        } else {
+            console.log("ERROR: difficulty is not between -5 and 15: " + difficulty[buffer[buffer.length-1]]);
+            if (difficulty[buffer[buffer.length-1]] < -5){
+                difficulty[buffer[buffer.length-1]] = -5;
+            } else if (difficulty[buffer[buffer.length-1]] > 15){
+                difficulty[buffer[buffer.length-1]] = 15;
+            } else {
+                console.log("ERROR: difficulty is not a number: " + difficulty[buffer[buffer.length-1]] + ". Setting to 5.");
+                difficulty[buffer[buffer.length-1]] = 5;
+            }
+        }
         io.emit("update_scores", scores);
     });
 
@@ -376,7 +395,20 @@ io.on("connection", (socket) => {
         if (SRn > dreamDifficulty) {
             difficulty[buffer[buffer.length-1]]++;
         }
-        client.set(("%difficulty"),difficulty.join(","));
+        // make sure the dream we just changed is a valid number and between -5 and 15
+        if (difficulty[buffer[buffer.length-1]] >= -5 && difficulty[buffer[buffer.length-1]] <= 15) {
+            client.set(("%difficulty"),difficulty.join(","));
+        } else {
+            console.log("ERROR: difficulty is not between -5 and 15: " + difficulty[buffer[buffer.length-1]]);
+            if (difficulty[buffer[buffer.length-1]] < -5){
+                difficulty[buffer[buffer.length-1]] = -5;
+            } else if (difficulty[buffer[buffer.length-1]] > 15){
+                difficulty[buffer[buffer.length-1]] = 15;
+            } else {
+                console.log("ERROR: difficulty is not a number: " + difficulty[buffer[buffer.length-1]] + ". Setting to 5.");
+                difficulty[buffer[buffer.length-1]] = 5;
+            }
+        }
 
         io.emit("update_scores", scores);
     });
