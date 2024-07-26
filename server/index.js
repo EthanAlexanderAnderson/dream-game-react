@@ -550,8 +550,8 @@ async function updateRandomDream(type, socket){
         // slowly increase bounds until we find a dream
         while ( buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)) ) 
         {
-            // special case: if dream is within the last 20 (increasing) most recently added, keep it regardless of difficulty/buffer
-            if (rng > count - (20 + i)){
+            // special case: if dream is within the last 20 (increasing) most recently added, add it if difficulty is between 4 and 6 (implies unsorted)
+            if (rng > count - (20 + i) && rng < count && difficulty[rng] > 4 && difficulty[rng] < 6){
                 break;
             }
 
