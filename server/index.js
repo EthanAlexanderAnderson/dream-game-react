@@ -48,6 +48,7 @@ let PFPs = [];
 let gnome = false;
 var gnomeChance = -1;
 let roundNumber = 0;
+let dreamCount = 0;
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
@@ -437,8 +438,11 @@ var buffer = [];
 async function updateRandomDream(type, socket){
     if (type === "new") {
         roundNumber++;
-        await fetch("&dreamcount");
-        let count = parseInt(redisResult);
+        if (dreamCount < 1) {
+            await fetch("&dreamcount");
+            dreamCount = parseInt(redisResult);
+        }
+        let count = dreamCount;
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
         // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
