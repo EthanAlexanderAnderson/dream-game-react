@@ -31,7 +31,7 @@ server.listen(process.env.PORT || 3001, () => {
 // ---------- End of restricted section ----------
 
 // dreamgame variables
-let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
 let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;

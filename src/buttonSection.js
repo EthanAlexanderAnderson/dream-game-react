@@ -2,11 +2,12 @@ import React from "react";
 import { useState} from "react";
 
 function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disabled, toggleGnome, gnomeButtonStatus }) {
-    let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+    let profileNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
+    let guessNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
     let classes = []
 
     let j = 0;
-    for (let i = 0; i < 13; i++) {
+    for (let i = 0; i < profileNames.length; i++) {
         if (disabled.length > 0 && i === disabled[j]) {
             //disabled.includes  should go here
             classes.push("btn btn-danger guessButton disabled")
@@ -28,7 +29,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
         return (
             <div id="buttonSection">
                 <p>Welcome to Dream Game. Please select your name:</p>
-                {names.map((item, index) => (
+                {profileNames.map((item, index) => (
                     <button key={index} className={classes[index]} onClick={() => playerJoin(item)}>{item}</button>
                 ))}
             </div>
@@ -36,7 +37,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
     } else if (status === "during") {
         return(
             <div id="guessButtons">
-                {names.map((item, index) => (
+                {guessNames.map((item, index) => (
                     <button key={index} className={classes[index]} onClick={() => guess(item)}>{item}</button>
                 ))}
             </div>

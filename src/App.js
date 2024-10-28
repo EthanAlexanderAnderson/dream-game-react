@@ -15,7 +15,7 @@ const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
 var myGuess = "";
 var answer = "";
 var gnome = false;
-let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
 // these three variables are used to calculate the timer intervals
 let position = 0;
 let difficulty = 0;
