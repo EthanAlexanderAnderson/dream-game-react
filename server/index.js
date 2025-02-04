@@ -305,11 +305,8 @@ io.on("connection", (socket) => {
         }
 
         // DIFFICULTY
-        // only decrease difficulty if the players rank is lower than the dreamer
         // TODO change this to use rank formula after testing non-int dream difficulties
-        if (SRn < dreamDifficulty) {
-            difficulty[buffer[buffer.length-1]]--;
-        }
+        difficulty[buffer[buffer.length-1]]--;
         // make sure the dream we just changed is a valid number and between -5 and 15
         if (difficulty[buffer[buffer.length-1]] >= -5 && difficulty[buffer[buffer.length-1]] <= 15) {
             client.set(("%difficulty"),difficulty.join(","));
@@ -391,11 +388,8 @@ io.on("connection", (socket) => {
         }
 
         // DIFFICULTY
-        // only increase difficulty if the players rank is higher than the dreamer
         // TODO change this to use rank formula after testing non-int dream difficulties
-        if (SRn > dreamDifficulty) {
-            difficulty[buffer[buffer.length-1]]++;
-        }
+        difficulty[buffer[buffer.length-1]]++;
         // make sure the dream we just changed is a valid number and between -5 and 15
         if (difficulty[buffer[buffer.length-1]] >= -5 && difficulty[buffer[buffer.length-1]] <= 15) {
             client.set(("%difficulty"),difficulty.join(","));
@@ -555,8 +549,8 @@ async function updateRandomDream(type, socket){
         while ( buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)) ) 
         {
             // special case: if dream is within the last 20 (increasing) most recently added, add it if difficulty is between 4 and 6 (implies unsorted)
-            // upped this to 350 temporarily because we have a lot of unsorted dreams
-            if (rng > count - (350 + i) && rng < count && difficulty[rng] > 4 && difficulty[rng] < 6){
+            // upped this to 700 temporarily because we have a lot of unsorted dreams
+            if (rng > count - (700 + i) && rng < count && difficulty[rng] > 4 && difficulty[rng] < 6){
                 break;
             }
 
