@@ -193,7 +193,7 @@ io.on("connection", (socket) => {
         let dreamerindex = -1;
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
 
-        if (scores[scoreindex][5] <= 0) {
+        if (scoreindex >= 0 && scoreindex < scores.length && scores[scoreindex][5] <= 0) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // let negative streak to 0
         }
         scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? parseInt(el) + 1 : el)); // increase streak
@@ -381,7 +381,7 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
         } else {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? (parseInt(el) - 1) : el)); // streak
-            if (scores[scoreindex][5] <= -5) {
+            if (scoreindex >= 0 && scoreindex < scores.length && scores[scoreindex][5] <= -5) {
         // biggest loser bonus
                 scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
                 scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
