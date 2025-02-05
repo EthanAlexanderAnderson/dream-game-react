@@ -155,15 +155,22 @@ io.on("connection", (socket) => {
             guessCount = 0;
             status = "after";
 
-            // bottom feeder
+            // increment bottom feeder streak counter
             if (playerCount > 1) {
                 let minSubarray = scores[0];
+                let nextMinSubarray = scores[0];
                 for (let i = 1; i < scores.length; i++) {
                     if (scores[i][2] < minSubarray[2]) {
-                    minSubarray = scores[i];
+                        minSubarray = scores[i];
                     }
                 }
-                if (bottomFeeder.name === minSubarray[1]) {
+                for (let i = 1; i < scores.length; i++) {
+                    if (scores[i][2] < nextMinSubarray[2] && scores[i][2] > minSubarray[2]) {
+                        nextMinSubarray = scores[i];
+                    }
+                }
+                // only increment streak if the bottom feeder is the same as last round and the new score is less than half of the next lowest score
+                if (bottomFeeder.name === minSubarray[1] && minSubarray[2] < (nextMinSubarray[2] / 2)) {
                     bottomFeeder.streak++;
                 } else {
                     bottomFeeder.name = minSubarray[1];
