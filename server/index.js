@@ -1,12 +1,16 @@
-// ---------- Don't touch this section ----------
 const dotenv = require("dotenv");
-dotenv.config();
+const path = require("path");
+const envFile = process.env.REDIS_ENV_FILE
+    ? path.resolve(process.env.REDIS_ENV_FILE)
+    : path.join(__dirname, ".env");
+dotenv.config({ path: envFile });
 const Redis = require("ioredis");
-const client = new Redis(process.env.REDIS_URL, {
+const redisUrl = process.env.REDIS_URL;
+const client = new Redis(redisUrl, redisUrl.startsWith("rediss://") ? {
     tls: {
         rejectUnauthorized: false
     }
-});
+} : {});
 const express = require("express");
 const app = express();
 const http = require("http");
@@ -14,13 +18,12 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 app.use(cors());
 const server = http.createServer(app);
-const path = require('path');
 app.use(express.static(path.join(__dirname, '../build')));
 app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 
 const io = new Server(server, {
     cors: {
-      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/"], // FOR PROD
+      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/", "https://dreamgame.ethananderson.ca/"], // FOR PROD
       methods: ["GET", "POST"],
     },
 });
@@ -28,15 +31,17 @@ const io = new Server(server, {
 server.listen(process.env.PORT || 3001, () => {
     console.log("SERVER IS RUNNING");
 });
-// ---------- End of restricted section ----------
 
 // dreamgame variables
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
-let redisResult = "default_redisResult_value";
 let playerCount = 0;
 let guessCount = 0;
-let scores = [];
-let stats = []; // [ 0name , 1corr, 2incorr, 3longeststreak, 4gnomecount, 5memcorr, 6memincorr, 7rank ]
+let scores = []; // [ 0 id,  1 name, 2 score, 3 is ready, 4 guess, 5 skill rating, 6 previous score, 7 bonus Array ]
+let stats = [];  // [ 0 name , 1 correct answers, 2 incorrect answers, 3 longest correct answer streak, 
+                 // 4 gnome count, 5 memory correct answers, 6 memory incorrect answers, 7 rank ]
+                 // (Memory correct/incorrect is the number of times a player has guessed their own dream correctly/incorrectly)
+                 // rank is an elo style rating that is updated after each round based on the difficulty of the dream and the player's current rank
+                 // the difficulty of the dream is a number between -5 and 15, with -5 being the easiest and 15 being the hardest
 let difficulty = [];
 let status = "before";
 let bottomFeeder = {
@@ -53,7 +58,9 @@ let dreamCount = 0;
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
 
-    updateStats();
+    updateStats().catch((error) => {
+        console.error(`Failed to load player stats: ${error.message}`);
+    });
 
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
@@ -68,8 +75,8 @@ io.on("connection", (socket) => {
 
             // prevents bricking from mid-round leavers
             if (guessCount === playerCount && guessCount !== 0){
-                console.log("server side all guessed: "+ redisResult);
-                io.emit("all_guessed", redisResult);
+                console.log("server side all guessed: "+ dreamer);
+                io.emit("all_guessed", dreamer);
                 guessCount = 0;
                 status = "after";
             }
@@ -88,7 +95,7 @@ io.on("connection", (socket) => {
       });
   
     // After new player selects their name
-    socket.on("player_join", (name) => {
+    socket.on("player_join", async (name) => {
         console.log(`User Connected: ${socket.id} ${name}`);
         //socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
@@ -96,7 +103,12 @@ io.on("connection", (socket) => {
             if (playerCount === 0) {
                 roundNumber = 0;
                 // and load saved buffer
-                loadBuffer();
+                try {
+                    await loadBuffer();
+                } catch (error) {
+                    console.error(`Failed to load dream buffer: ${error.message}`);
+                    return;
+                }
             }
             playerCount++;
             // scores variable items: id, name, score, ready, guess, skillrating, scorePrev, bonus Array
@@ -111,18 +123,26 @@ io.on("connection", (socket) => {
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
         io.emit("toggle_gnome_button_status", gnome);
-        updatePFPs();
+        try {
+            await updatePFPs();
+        } catch (error) {
+            console.error(`Failed to load profile pictures: ${error.message}`);
+        }
     });
 
     // After new player selects their name
-    socket.on("get_random_dream_u", (data) => {
+    socket.on("get_random_dream_u", async (data) => {
         // this if statement with new/refresh stops mid-round joiners from triggering new dream
         if (!(status === "during")){
-            updateRandomDream("new", socket);
+            const started = await updateRandomDream("new", socket);
+            if (!started) {
+                return;
+            }
             status = "during";
             setReady("all", "Waiting...");
             clearBonus();
             io.emit("update_scores", scores);
+            // only a 20% chance of gnome appearing if gnome is enabled
             if (gnome) {
                 gnomeChance = Math.floor(Math.random() * 5);
             }
@@ -186,12 +206,19 @@ io.on("connection", (socket) => {
         io.emit('receive_message', { message, name });
     });
 
-    socket.on("correct", (name) => {
+    socket.on("correct", async (name) => {
         
         let statindex = -1;
         let scoreindex = -1;
         let dreamerindex = -1;
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
+        if (!isValidPlayerIndexes(statindex, scoreindex)) {
+            console.error(`Cannot process correct answer for unknown player: ${name}`);
+            return;
+        }
+        if (!isValidRoundState()) {
+            return;
+        }
 
         if (scoreindex >= 0 && scoreindex < scores.length && scores[scoreindex][5] <= 0) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // let negative streak to 0
@@ -219,6 +246,7 @@ io.on("connection", (socket) => {
         }
         //console.log("SRn: "+ SRo + " + abs(" +  SRo + " - Math.max(" + SRo + ", " + currentDreamDifficulty + ") * 0.1 )");
         //console.log( "SRn: "+ (SRo + Math.abs( (SRo - Math.max(SRo, currentDreamDifficulty)) * 0.1 )) );
+        // update the player's rank based on the difficulty of the dream and their current rank
         let SRn = (SRo + Math.max(1, Math.abs(currentDreamDifficulty - SRo))**(Math.sign(currentDreamDifficulty - SRo)) * 0.1).toFixed(2);
         console.log(name + " SRo: " + SRo + "   -->   SRn: "+ SRn);
         stats = stats.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === name ? ((parseFloat(el)) + Math.max(1, Math.abs(currentDreamDifficulty - (parseFloat(el))))**(Math.sign(currentDreamDifficulty - (parseFloat(el)))) * 0.1).toFixed(2) : el));
@@ -232,7 +260,7 @@ io.on("connection", (socket) => {
         }
         // only push to database if the data is good (each value is a number, or a string representing a number)
         if (temp.every((el) => !isNaN(el) || !isNaN(parseFloat(el)))) {
-            client.set(("%"+name),temp.join(","));
+            await write("%" + name, temp.join(","));
         } else {
             console.log("ERROR: stats data is not good: " + temp);
             // if data is bad, likely its due to rank being NaN, so revert it to SRo if it's a number
@@ -316,7 +344,7 @@ io.on("connection", (socket) => {
         difficulty[buffer[buffer.length-1]]--;
         // make sure the dream we just changed is a valid number and between -5 and 15
         if (difficulty[buffer[buffer.length-1]] >= -5 && difficulty[buffer[buffer.length-1]] <= 15) {
-            client.set(("%difficulty"),difficulty.join(","));
+            await write("%difficulty", difficulty.join(","));
         } else {
             console.log("ERROR: difficulty is not between -5 and 15: " + difficulty[buffer[buffer.length-1]]);
             if (difficulty[buffer[buffer.length-1]] < -5){
@@ -327,15 +355,23 @@ io.on("connection", (socket) => {
                 console.log("ERROR: difficulty is not a number: " + difficulty[buffer[buffer.length-1]] + ". Setting to 5.");
                 difficulty[buffer[buffer.length-1]] = 5;
             }
+            await write("%difficulty", difficulty.join(","));
         }
         io.emit("update_scores", scores);
     });
 
-    socket.on("incorrect", (name) => {
+    socket.on("incorrect", async (name) => {
         let statindex = -1;
         let scoreindex = -1;
         let dreamerindex = -1;
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
+        if (!isValidPlayerIndexes(statindex, scoreindex)) {
+            console.error(`Cannot process incorrect answer for unknown player: ${name}`);
+            return;
+        }
+        if (!isValidRoundState()) {
+            return;
+        }
         // STATS
         // incorrect guesses stat
         stats = stats.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === name ? parseInt(el) + 1 : el));
@@ -399,7 +435,7 @@ io.on("connection", (socket) => {
         difficulty[buffer[buffer.length-1]]++;
         // make sure the dream we just changed is a valid number and between -5 and 15
         if (difficulty[buffer[buffer.length-1]] >= -5 && difficulty[buffer[buffer.length-1]] <= 15) {
-            client.set(("%difficulty"),difficulty.join(","));
+            await write("%difficulty", difficulty.join(","));
         } else {
             console.log("ERROR: difficulty is not between -5 and 15: " + difficulty[buffer[buffer.length-1]]);
             if (difficulty[buffer[buffer.length-1]] < -5){
@@ -410,6 +446,7 @@ io.on("connection", (socket) => {
                 console.log("ERROR: difficulty is not a number: " + difficulty[buffer[buffer.length-1]] + ". Setting to 5.");
                 difficulty[buffer[buffer.length-1]] = 5;
             }
+            await write("%difficulty", difficulty.join(","));
         }
 
         io.emit("update_scores", scores);
@@ -427,10 +464,69 @@ io.on("connection", (socket) => {
 
 // helper funcs -----------------------------
 async function fetch(key) {
-    let out = client.get(key);
-    await out.then(function(result) {
-        redisResult = result;
-      })
+    try {
+        return await client.get(key);
+    } catch (error) {
+        console.error(`Redis read failed for ${key}: ${error.message}`);
+        throw error;
+    }
+}
+
+async function write(key, value) {
+    try {
+        await client.set(key, value);
+    } catch (error) {
+        console.error(`Redis write failed for ${key}: ${error.message}`);
+        throw error;
+    }
+}
+
+function parseInteger(value, minimum = 0) {
+    if (typeof value !== "string" && typeof value !== "number") {
+        return null;
+    }
+    const text = String(value).trim();
+    if (!/^-?\d+$/.test(text)) {
+        return null;
+    }
+    const parsed = Number.parseInt(text, 10);
+    return Number.isSafeInteger(parsed) && parsed >= minimum ? parsed : null;
+}
+
+function parseDifficulty(value) {
+    if (typeof value !== "string" && typeof value !== "number") {
+        return null;
+    }
+    const text = String(value).trim();
+    if (text === "" || !/^-?(?:\d+|\d*\.\d+)$/.test(text)) {
+        return null;
+    }
+    const parsed = Number.parseFloat(text);
+    return Number.isFinite(parsed) && parsed >= -5 && parsed <= 15 ? parsed : null;
+}
+
+function isValidPlayerIndexes(statindex, scoreindex) {
+    return statindex >= 0 && statindex < stats.length &&
+        scoreindex >= 0 && scoreindex < scores.length;
+}
+
+function isValidRoundState() {
+    const bufferIndex = buffer[buffer.length - 1];
+    if (buffer.length === 0 || parseInteger(String(bufferIndex)) === null ||
+        bufferIndex >= dreamCount) {
+        console.error("Cannot process answer: current round has invalid buffer data.");
+        return false;
+    }
+
+    if (parseDifficulty(difficulty[bufferIndex]) === null) {
+        console.error(`Invalid difficulty for current dream ${bufferIndex}. Setting it to 5.`);
+        difficulty[bufferIndex] = 5;
+        write("%difficulty", difficulty.join(",")).catch((error) => {
+            console.error(`Failed to persist default difficulty for dream ${bufferIndex}: ${error.message}`);
+        });
+    }
+
+    return true;
 }
 var dream = "";
 var dreamer = "";
@@ -440,93 +536,24 @@ async function updateRandomDream(type, socket){
     if (type === "new") {
         roundNumber++;
         if (dreamCount < 1) {
-            await fetch("&dreamcount");
-            dreamCount = parseInt(redisResult);
+            const dreamCountValue = await fetch("&dreamcount");
+            const parsedDreamCount = parseInteger(dreamCountValue, 1);
+            if (parsedDreamCount === null) {
+                console.error(`Invalid &dreamcount value: ${dreamCountValue}. Cannot start a round.`);
+                return false;
+            }
+            dreamCount = parsedDreamCount;
         }
         let count = dreamCount;
+        if (count > difficulty.length) {
+            console.error(`&dreamcount is ${count}, but only ${difficulty.length} difficulty values are available. Filling missing values with 5.`);
+            difficulty = difficulty.concat(Array(count - difficulty.length).fill(5));
+            await write("%difficulty", difficulty.join(","));
+        }
         let rng = Math.floor(Math.random() * Math.floor(count));
         let i = 0;
-        // if dream is in buffer, or difficulty is too easy or hard (with progressive tolerance), reroll
 
-        // progressive difficulty for first 70 rounds (quickplay mode)
         console.log("roundNumber: " + roundNumber);
-        /*
-        if (roundNumber <= 70) {
-            let lowerBounds;
-            let upperBounds;
-
-            // let the first 1 be medium-hard to prevent refresh farming
-            if (roundNumber === 1){
-                lowerBounds = 4;
-                upperBounds = 9;
-            }
-            // the next 3 be trivial
-            else if (roundNumber < 5){
-                lowerBounds = -999;
-                upperBounds = -3;
-            }
-            // after that, we give a very hard every 10th round
-            else if (roundNumber % 10 === 0){
-                lowerBounds = 10;
-                upperBounds = 999;
-            }
-            // and an easy one every 5th round
-            else if (roundNumber % 5 === 0){
-                lowerBounds = -999;
-                upperBounds = 3;
-            }
-            // else, slowly increase diff
-            else {
-                lowerBounds = -3 + Math.floor(roundNumber/5);
-                upperBounds = 6 + Math.floor(roundNumber/5);
-            }
-
-            /*
-            if (roundNumber <= 10){
-                lowerBounds = -999;
-                upperBounds = -3;
-            }
-            else if (roundNumber <= 20){
-                lowerBounds = -2;
-                upperBounds = 0;
-            }
-            else if (roundNumber <= 30){
-                lowerBounds = 1;
-                upperBounds = 3;
-            }
-            else if (roundNumber <= 40){
-                lowerBounds = 4;
-                upperBounds = 6;
-            }
-            else if (roundNumber <= 50){
-                lowerBounds = 7;
-                upperBounds = 9;
-            }
-            else if (roundNumber <= 70){
-                lowerBounds = 10;
-                upperBounds = 999;
-            }
-            
-            this is commented out until we have more impossible dreams
-            else if (roundNumber <= 60){
-                lowerBounds = 10;
-                upperBounds = 12;
-            }
-            else if (roundNumber <= 70){
-                lowerBounds = 13;
-                upperBounds = 999;
-            }
-            
-            while (buffer.includes(rng) || 
-            ((difficulty[rng] < lowerBounds || difficulty[rng] > upperBounds) && i < 2000)
-            ) {
-                rng = Math.floor(Math.random() * Math.floor(count));
-                i++;
-            }
-        }
-        */
-        // regular old gameplay (freeplay mode)
-        
         // we want to favor dreams closer to the average rank of players in the game
         let averageRank = 0;
         if (scores.length > 0){
@@ -553,7 +580,8 @@ async function updateRandomDream(type, socket){
             averageRank = 5;
         }
         // slowly increase bounds until we find a dream
-        while ( buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)) ) 
+        const maxAttempts = Math.max(100000, count * 20);
+        while (i < maxAttempts && (buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)))) 
         {
             // special case: if dream is within the last 20 (increasing) most recently added, add it if difficulty is between 4 and 6 (implies unsorted)
             // upped this to 700 temporarily because we have a lot of unsorted dreams
@@ -565,53 +593,164 @@ async function updateRandomDream(type, socket){
             i++;
         }
 
+        if (i >= maxAttempts || buffer.includes(rng) ||
+            difficulty[rng] < (averageRank - i / 10) ||
+            difficulty[rng] > (averageRank + i / 10)) {
+            console.warn(`Unable to select a preferred dream after ${maxAttempts} attempts. Selecting randomly.`);
+            rng = Math.floor(Math.random() * Math.floor(count));
+        }
+
+        const candidateIndexes = [rng];
+        for (let offset = 1; offset < count; offset++) {
+            candidateIndexes.push((rng + offset) % count);
+        }
+
+        let selected = false;
+        for (const candidate of candidateIndexes) {
+            const candidateDream = await fetch("&dream" + candidate);
+            const candidateDreamer = await fetch("&dreamer" + candidate);
+            if (typeof candidateDream !== "string" || candidateDream.trim() === "" ||
+                typeof candidateDreamer !== "string" || candidateDreamer.trim() === "") {
+                console.error(`Missing dream data for index ${candidate}. Trying another dream.`);
+                continue;
+            }
+
+            rng = candidate;
+            dream = candidateDream;
+            dreamer = candidateDreamer;
+            selected = true;
+            break;
+        }
+
+        if (!selected) {
+            console.error("No dream records contain both dream text and a dreamer.");
+            return false;
+        }
+
+        const normalizedDifficulty = parseDifficulty(String(difficulty[rng]));
+        if (normalizedDifficulty === null) {
+            difficulty[rng] = 5;
+            await write("%difficulty", difficulty.join(","));
+            dreamDifficulty = 5;
+        } else {
+            dreamDifficulty = normalizedDifficulty;
+        }
+
         buffer.push(rng);
         if (buffer.length > 700) {
             buffer.shift();
         }
-        client.set(("%buffer"),buffer.join(","));
-        dreamDifficulty = parseInt(difficulty[rng]);
-        console.log("dream #" + rng + " selected. It's difficulty is: " + difficulty[rng] + ". Found with counter: " + i + ". Average Rank: " + averageRank);
+        await write("%buffer",buffer.join(","));
+        console.log("dream #" + rng + " selected. It's difficulty is: " + dreamDifficulty + ". Found with counter: " + i + ". Average Rank: " + averageRank);
         console.log("Buffer: " + buffer);
-        await fetch("&dream"+rng);
-        dream = redisResult;
-        await fetch("&dreamer"+rng);
-        dreamer = redisResult;
         io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
+        return true;
     } else {
         socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
+        return true;
     }
 }
 
 async function updateStats() {
     stats = [];
     for (let n of names) {
-        await fetch("%" + n);
-        let temp = redisResult.split(",")
+        const value = await fetch("%" + n);
+        const temp = await normalizePlayerStats(n, value);
         temp.unshift(n)
         stats.push(temp);
     }
     io.emit("update_stats", stats);
-    loadDifficulty();
+    await loadDifficulty();
+}
+
+async function normalizePlayerStats(name, value) {
+    const rawStats = typeof value === "string" ? value.split(",") : [];
+    const normalizedStats = [];
+
+    for (let i = 0; i < 6; i++) {
+        const stat = rawStats[i];
+        normalizedStats.push(typeof stat === "string" && /^\d+$/.test(stat.trim())
+            ? String(parseInt(stat.trim(), 10))
+            : "0");
+    }
+
+    const rank = rawStats[6];
+    normalizedStats.push(typeof rank === "string" && /^-?\d+(?:\.\d{1,2})?$/.test(rank.trim())
+        ? Number.parseFloat(rank.trim()).toFixed(2)
+        : "0.00");
+
+    const normalizedValue = normalizedStats.join(",");
+    if (value !== normalizedValue) {
+        console.log(`Repairing Redis stats for ${name}: ${value === null ? "missing value" : value} -> ${normalizedValue}`);
+        await write("%" + name, normalizedValue);
+    }
+
+    return normalizedStats;
 }
 
 async function updatePFPs() {
     PFPs = []
     for (let n of names) {
-        await fetch("$" + n);
-        PFPs.push([n, redisResult]);
+        const value = await fetch("$" + n);
+        let profilePicture = "";
+        if (typeof value === "string" && value !== "") {
+            try {
+                const url = new URL(value);
+                if (url.protocol === "http:" || url.protocol === "https:") {
+                    profilePicture = value;
+                } else {
+                    console.error(`Invalid profile picture URL for ${n}: ${value}`);
+                }
+            } catch (error) {
+                console.error(`Invalid profile picture URL for ${n}: ${value}`);
+            }
+        }
+        PFPs.push([n, profilePicture]);
     }
     io.emit("update_PFPs", PFPs);
 }
 
 async function loadDifficulty() {
-    await fetch("%difficulty");
-    difficulty = redisResult.split(",");
+    const value = await fetch("%difficulty");
+    if (value === null || value === undefined || value === "") {
+        difficulty = [];
+    } else {
+        const rawDifficulty = value.split(",");
+        difficulty = rawDifficulty.map((entry, index) => {
+            const parsed = parseDifficulty(entry);
+            if (parsed === null) {
+                console.error(`Invalid difficulty at index ${index}: ${entry}. Setting it to 5.`);
+                return 5;
+            }
+            return parsed;
+        });
+        const normalizedValue = difficulty.join(",");
+        if (normalizedValue !== value) {
+            await write("%difficulty", normalizedValue);
+        }
+    }
 }
 
 async function loadBuffer() {
-    await fetch("%buffer");
-    buffer = redisResult.split(",");
+    const value = await fetch("%buffer");
+    if (value === null || value === undefined || value === "") {
+        buffer = [];
+    } else {
+        const rawBuffer = value.split(",");
+        buffer = rawBuffer.reduce((validEntries, entry, index) => {
+            const parsed = parseInteger(entry);
+            if (parsed === null) {
+                console.error(`Invalid dream buffer entry at index ${index}: ${entry}. Removing it.`);
+                return validEntries;
+            }
+            validEntries.push(parsed);
+            return validEntries;
+        }, []);
+        const normalizedValue = buffer.join(",");
+        if (normalizedValue !== value) {
+            await write("%buffer", normalizedValue);
+        }
+    }
 }
 
 // GETTERS AND SETTERS FOR scores VARIABLE
@@ -708,7 +847,7 @@ have your socket.on call some random async function
 (IT CAN'T DO ANYTHING ELSE)
 and then have that random async function do your dirty work
 and use await for every fetch
-then get the return of fetch from redisResult variable
+then use the value returned by fetch directly
 
 naming conventions:
 fetch = get from redis

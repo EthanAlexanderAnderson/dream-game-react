@@ -1,2 +1,3 @@
 server/.env
+server/.env.local
 node_modules/.cache/

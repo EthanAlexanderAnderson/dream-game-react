@@ -166,7 +166,10 @@ function App() {
       const split = data.dream.split(' ');
       // if dream is long enough and 20% chance is reached (gnomeChance can be 0 to 4)
       if (split.length > 16 && data.gnomeChance === 0) {
+        // if dream is long enough, check for a 5 letter word in the middle of the dream
+        // start the loop at the middle of the dream, and end it 5 words before the end of the dream
         for (let i = (Math.floor(split.length / 2)); i < (split.length - 5); i++) {
+          // if a word is 5 letters long, split the dream into two sections so that we can add a "Gnome" to the middle, and set answer to "Gnome"
           if (split[i].length === 5) {
             setTextSection(split.slice(0, i).join(" ") + " ");
             setTextSectionTwo(split.slice(i+1, split.length).join(" "));

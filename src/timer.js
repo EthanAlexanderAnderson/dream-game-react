@@ -8,8 +8,12 @@ function Timer({ trigger, guess, myGuess, status, disableRandomButton, position,
     if (myGuess !== "") { previousGuess = myGuess; }
 
     var baseTime = 10;
-    var maxTime = previousGuess === "-----" ? baseTime : baseTime + trigger; // only add time if the previous guess was not "-----" (aka didn't time out)
+    // only add time if the previous guess was not "-----" (aka didn't time out)
+    // this is so AFK players don't hold up the game
+    var maxTime = previousGuess === "-----" ? baseTime : baseTime + trigger; 
 
+    // players with lower scores, lower ranks, and lower positions will get more hints
+    // a hint is a button with an incorrect answer that is disabled at a certain time in the timer
     let hintsArray = [];
     let numberOfHints = 0;
     let scoreBasedHints = 0;
@@ -17,12 +21,16 @@ function Timer({ trigger, guess, myGuess, status, disableRandomButton, position,
     let positionBasedHints = 0;
 
     //console.log("position: " + position + " difficulty: " + difficulty + " rank: " + rank + " score: " + score + " averageScore: " + averageScore);
+    // if the player has a score less than the average score, give them more hints based on how far below the average they are
     if (score >= 0 && averageScore > 10) {
         scoreBasedHints = Math.floor((averageScore - score)/(averageScore/10));
     }
+    // players get hints based on their scoreboard position (1st place gets 0 hints, 2nd place gets 1 hint, etc.)
     if (averageScore > 2) {
         positionBasedHints = position;
     }
+    // if the player has a rank lower than the current dream difficulty,
+    // they get hints based on how far below the difficulty they are
     rankBasedHints = Math.ceil(difficulty-rank);
     numberOfHints = Math.max(0, positionBasedHints, rankBasedHints, scoreBasedHints)
     //console.log("hints: " + numberOfHints + " positionBasedHints: " + positionBasedHints + " rankBasedHints: " + rankBasedHints + " scoreBasedHints: " + scoreBasedHints);
