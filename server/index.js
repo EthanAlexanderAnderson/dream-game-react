@@ -50,6 +50,7 @@ let bottomFeeder = {
   };
 let earlyBird = "";
 let PFPs = [];
+const DEFAULT_PROFILE_PICTURE = "/player.png";
 let gnome = false;
 var gnomeChance = -1;
 let roundNumber = 0;
@@ -692,22 +693,61 @@ async function updatePFPs() {
     PFPs = []
     for (let n of names) {
         const value = await fetch("$" + n);
-        let profilePicture = "";
-        if (typeof value === "string" && value !== "") {
-            try {
-                const url = new URL(value);
-                if (url.protocol === "http:" || url.protocol === "https:") {
-                    profilePicture = value;
-                } else {
-                    console.error(`Invalid profile picture URL for ${n}: ${value}`);
-                }
-            } catch (error) {
-                console.error(`Invalid profile picture URL for ${n}: ${value}`);
-            }
-        }
+        const profilePicture = await getValidProfilePicture(value, n);
         PFPs.push([n, profilePicture]);
     }
     io.emit("update_PFPs", PFPs);
+}
+
+async function getValidProfilePicture(value, name) {
+    if (typeof value !== "string" || value.trim() === "") {
+        return DEFAULT_PROFILE_PICTURE;
+    }
+
+    let url;
+    try {
+        url = new URL(value);
+    } catch (error) {
+        console.error(`Invalid profile picture URL for ${name}: ${value}`);
+        return DEFAULT_PROFILE_PICTURE;
+    }
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+        console.error(`Unsupported profile picture URL for ${name}: ${value}`);
+        return DEFAULT_PROFILE_PICTURE;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+        let response = await globalThis.fetch(url, {
+            method: "HEAD",
+            redirect: "follow",
+            signal: controller.signal
+        });
+
+        // Some image hosts do not implement HEAD, so request only one byte.
+        if (response.status === 405) {
+            response = await globalThis.fetch(url, {
+                headers: { Range: "bytes=0-0" },
+                redirect: "follow",
+                signal: controller.signal
+            });
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!response.ok || !contentType.toLowerCase().startsWith("image/")) {
+            console.error(`Profile picture unavailable for ${name}: ${value} (${response.status}, ${contentType || "unknown content type"})`);
+            return DEFAULT_PROFILE_PICTURE;
+        }
+
+        return value;
+    } catch (error) {
+        console.error(`Profile picture check failed for ${name}: ${value} (${error.message})`);
+        return DEFAULT_PROFILE_PICTURE;
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 async function loadDifficulty() {

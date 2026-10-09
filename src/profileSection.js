@@ -39,7 +39,7 @@ function ProfileSection(props) {
         <div id="profileSection">
             <div id="profileSectionHeader">
                 <div className="profileName">Profile: {props.name}</div>
-                <img className="profileImage" alt="Large profile" src={PFP}></img>
+                <img className="profileImage" alt="Large profile" src={PFP || "player.png"} onError={(event) => { event.currentTarget.src = "player.png"; }}></img>
             </div>
             {stats.map((item, index) => (
                 <li key={index} className={"mod"+index%2}>{labels[index]}{item}</li>

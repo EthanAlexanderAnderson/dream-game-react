@@ -141,7 +141,7 @@ function PlayerSection(props) {
                                 <tr key={item[1] + "Row"}>
                                     <td key={item[1] + "name"}>
                                         {rank}
-                                        <img className="PFP" src={PFPs.get(item[1])} alt='player'></img>
+                                        <img className="PFP" src={PFPs.get(item[1]) || "player.png"} alt='player' onError={(event) => { event.currentTarget.src = "player.png"; }}></img>
                                         {item[1]}
                                     </td>
                                     <td key={item[1] + "score"}>
