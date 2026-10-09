@@ -264,3 +264,10 @@ li {
     color: #AAAAAA;
     font-style: italic;
 }
+.readyStatus {
+  color: green;
+}
+
+.notReadyStatus {
+  color: red;
+}

@@ -1,7 +1,6 @@
 import React from "react";
-import { useState} from "react";
 
-function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disabled, toggleGnome, gnomeButtonStatus }) {
+function ButtonSection({ name, setStatus, playerJoin, status, ready, guess, disabled, toggleGnome, gnomeButtonStatus }) {
     let profileNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
     let guessNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
     let classes = []
@@ -17,15 +16,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
         }
     }
 
-    const [message, setMessage] = useState('');
-    const handleChange = event => {
-        if (event.target.value === "silly" || event.target.value === "Silly"){
-            setStatus("before");
-        }
-        setMessage(event.target.value);
-    };
-
-    if (name === "" && status !== "password"){
+    if (name === ""){
         return (
             <div id="buttonSection">
                 <p>Welcome to Dream Game. Please select your name:</p>
@@ -52,27 +43,12 @@ function ButtonSection({ name, setStatus, playerJoin, status, start, guess, disa
     else if (status === "before") {
         return(
             <div id="controlButtons">
-                <button className="btn btn-light" onClick={() => start()}>Start</button>
+                <button className="btn btn-light" onClick={() => ready()}>Ready</button>
                 <br></br>
                 <button className={gnomeButtonStatus ? 'btn gnome toggled' : 'btn gnome'} onClick={() => toggleGnome()}><img id="toggleGnome" src="gnome_256.png" alt="toggle gnome mode"></img></button>
             </div>
         );
     } 
-    else if (name === "") {
-        return(
-            <div>
-            <input
-              id="message"
-              name="message"
-              type="text"
-              placeholder="Password"
-              onChange={handleChange}
-              value={message}
-              autoFocus
-            />
-          </div>
-        );
-    }
 }
 
 

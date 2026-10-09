@@ -50,9 +50,8 @@ function PlayerSection(props) {
 
     let colThree = "";
     if (status === "before") {
-        colThree = "Skill Rating"
-        // sort by skill rating
-        playerSection.sort((a, b) => b[5] - a[5]);
+        colThree = "Status"
+        playerSection.sort((a, b) => (a[3] === "Ready" ? -1 : 1) - (b[3] === "Ready" ? -1 : 1));
     } else if (status === "during") {
         colThree = "Status"
         // sort by score
@@ -92,8 +91,7 @@ function PlayerSection(props) {
                                     scoreDiff = ((item[2] - item[6]) > 0) ? <span className="scoreDiffPos">+{item[2] - item[6]}</span> : ((item[2] - item[6]) < 0) ? <span className="scoreDiffNeg">{item[2] - item[6]}</span> : null
                                     bonusArray = item[7].map((bonus, index) => <div key={bonus[0]+item[1]} className="bonus">{bonus[0]} +{bonus[1]}</div>)
                                 } else if (status === "before") {
-                                    // show skill rating
-                                    itemThree = item[5];
+                                    itemThree = item[3];
                                 }
                                 let rank = [];
                                 // rank
@@ -148,7 +146,9 @@ function PlayerSection(props) {
                                         {item[2]} {scoreDiff} {bonusArray}
                                     </td>
                                     <td key={item[1] + colThree}>
-                                        {itemThree}
+                                        <span className={status === "before" ? (itemThree === "Ready" ? "readyStatus" : (itemThree === "Not Ready" ? "notReadyStatus" : "")) : ""}>
+                                            {itemThree}
+                                        </span>
                                     </td>
                                 </tr>
                                 );

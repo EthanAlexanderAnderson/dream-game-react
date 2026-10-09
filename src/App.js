@@ -37,8 +37,7 @@ function App() {
   const [difficultyString, setDifficultyString] = useState("");
   const [image, setImage] = useState("");
   const [name, setName] = useState("");
-  const [status, setStatus] = useState("password");
-  //const [players, setPlayers] = useState([]); 
+  const [status, setStatus] = useState("before");
   const [scores, setScores] = useState([]);
   const [stats, setStats] = useState([]);
   const [PFPs, setPFPs] = useState([]);
@@ -55,13 +54,16 @@ function App() {
     socket = io.connect(URL);
     // set name on user
     setName(name);
-    // update player list on user
-    //(previous => [...previous, name])
+    setStatus("before");
     // update player list on peers
     socket.emit("player_join", name);
   };
 
-  // start round
+  // mark player ready for the next round
+  const ready = () => {
+    socket.emit("ready");
+  };
+
   const start = () => {
     socket.emit("get_random_dream_u");
   };
@@ -86,7 +88,7 @@ function App() {
 
   // send message to socket
   const sendMessage = () => {
-    socket.emit("send_message", { message, name });
+    socket.emit("send_message", { message });
   }
 
   // socket handlers -----------
@@ -184,6 +186,9 @@ function App() {
 
   // when all players guessed
   const allGuessed = (answer) => {
+    if (status !== "during" && status !== "guessed") {
+      return;
+    }
     if (answer === myGuess) {
       setResultSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
       socket.emit("correct", name);
@@ -289,7 +294,7 @@ function App() {
           <div id='difficultyText' title={difficulty}>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
         </div>
 
-        <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} start={start} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
+        <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} ready={ready} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
 
         <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} difficulty={difficulty} rank={rank} score={score} averageScore={averageScore} tick={tick}/>
 

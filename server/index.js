@@ -62,6 +62,8 @@ let dreamCount = 0;
 let startingRound = false;
 let roundTimer = null;
 let processedAnswers = new Set();
+let roundPlayers = new Set();
+let readyForNextRound = new Set();
 let shuttingDownForRedis = false;
 
 client.on("error", (error) => {
@@ -83,6 +85,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
         if (Array.isArray(name)) {console.log(`User Disconnected: ${socket.id} ${name[1]}`);}
+        const disconnectedPlayerName = Array.isArray(name) ? name[1] : null;
         // only decrease playercount if the user had selected a name
         if (scores.some(item => item[0] === socket.id)){
             playerCount--;
@@ -104,11 +107,19 @@ io.on("connection", (socket) => {
             guessCount = 0;
         }
         scores = scores.filter(subArr => !subArr.includes(socket.id));
+        roundPlayers.delete(socket.id);
+        readyForNextRound.delete(socket.id);
         if (status === "during" && playerCount > 0 &&
-            scores.every((entry) => entry[3] === "Ready")) {
+            [...roundPlayers].every((id) => {
+                const player = scores.find((entry) => entry[0] === id);
+                return !player || player[3] === "Guessed";
+            })) {
             finishRound();
         }
         io.emit("update_scores", scores);
+        if (disconnectedPlayerName) {
+            emitServerMessage(`${disconnectedPlayerName} left.`);
+        }
         console.log("Player Count: " + playerCount + " --- Guess Count: " + guessCount);
       });
   
@@ -118,6 +129,7 @@ io.on("connection", (socket) => {
             console.error(`Rejected invalid player name: ${name}`);
             return;
         }
+        let joined = false;
         console.log(`User Connected: ${socket.id} ${name}`);
         //socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
@@ -126,8 +138,9 @@ io.on("connection", (socket) => {
                 roundNumber = 0;
             }
             playerCount++;
+            joined = true;
             // scores variable items: id, name, score, ready, guess, skillrating, scorePrev, bonus Array
-            scores.push([socket.id, name, 0, "Waiting...", "null", 0, 0, []]);
+            scores.push([socket.id, name, 0, "Not Ready", "-----", 0, 0, []]);
             for (let s of stats) {
                 if (s[0] === name) {
                     s.push(socket.id);
@@ -139,6 +152,29 @@ io.on("connection", (socket) => {
         io.emit("update_scores", scores);
         io.emit("toggle_gnome_button_status", gnome);
         io.emit("update_PFPs", PFPs);
+        if (joined) {
+            emitServerMessage(`${name} joined.`);
+        }
+    }));
+
+    socket.on("ready", safeAsyncHandler("ready", async () => {
+        const player = scores.find((entry) => entry[0] === socket.id);
+        if (!player) {
+            return;
+        }
+
+        if (status === "during") {
+            player[3] = "Ready";
+            readyForNextRound.add(socket.id);
+            io.emit("update_scores", scores);
+            return;
+        }
+
+        player[3] = "Ready";
+        io.emit("update_scores", scores);
+        if (canBeginRound()) {
+            await beginRound(socket);
+        }
     }));
 
     // After new player selects their name
@@ -152,24 +188,8 @@ io.on("connection", (socket) => {
         }
         // this if statement with new/refresh stops mid-round joiners from triggering new dream
         if (!(status === "during")){
-            startingRound = true;
-            try {
-                const started = await updateRandomDream("new", socket);
-                if (!started) {
-                    return;
-                }
-                status = "during";
-                processedAnswers = new Set();
-                setReady("all", "Waiting...");
-                clearBonus();
-                io.emit("update_scores", scores);
-                scheduleRoundTimeout();
-                // only a 20% chance of gnome appearing if gnome is enabled
-                if (gnome) {
-                    gnomeChance = Math.floor(Math.random() * 5);
-                }
-            } finally {
-                startingRound = false;
+            if (canBeginRound()) {
+                await beginRound(socket);
             }
         } else {
             await updateRandomDream("refresh", socket);
@@ -178,7 +198,7 @@ io.on("connection", (socket) => {
 
     socket.on("guess", (guess) => {
         const player = scores.find((entry) => entry[0] === socket.id);
-        if (!player || status !== "during" || player[3] === "Ready") {
+        if (!player || status !== "during" || !roundPlayers.has(socket.id) || player[3] !== "Guessing...") {
             return;
         }
         if (typeof guess !== "string" || guess.length > 200) {
@@ -187,7 +207,7 @@ io.on("connection", (socket) => {
         }
         console.log("Guess #" + guessCount + "   Of:" + guess + "   From guesser: " + player[1]);
         guessCount++;
-        setReady(socket, "Ready");
+        setReady(socket, "Guessed");
         setGuess(socket, guess);
         scores = scores.map(subArr => subArr.map((el, i) => i === 6 && subArr[0] === socket.id ? subArr[2] : el)); // scorePrev
         io.emit("update_scores", scores);
@@ -198,7 +218,7 @@ io.on("connection", (socket) => {
         if (guess === "Gnome") {
             dreamer = "Gnome";
         }
-        if (guessCount === playerCount){
+        if (guessCount === roundPlayers.size){
             finishRound();
         }
     });
@@ -298,7 +318,7 @@ io.on("connection", (socket) => {
         // streak bonus
         // if undefined, set 0
         if (scores[scoreindex] === undefined || scores[scoreindex] === null) {
-            scores[scoreindex] = [socket.id, name, 0, "Waiting...", "null", 0, 0, [], 0];
+            scores[scoreindex] = [socket.id, name, 0, "Not Ready", "Not Ready", 0, 0, [], 0];
         }
         if (scores[scoreindex] && (scores[scoreindex][5] === undefined || scores[scoreindex][5] === null)) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
@@ -416,7 +436,7 @@ io.on("connection", (socket) => {
         // BONUSES
         // if undefined, set 0
         if (scores[scoreindex] === undefined || scores[scoreindex] === null) {
-            scores[scoreindex] = [socket.id, name, 0, "Waiting...", "null", 0, 0, [], 0];
+            scores[scoreindex] = [socket.id, name, 0, "Not Ready", "Not Ready", 0, 0, [], 0];
         }
         if (scores[scoreindex] && (scores[scoreindex][5] === undefined || scores[scoreindex][5] === null)) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
@@ -467,8 +487,13 @@ io.on("connection", (socket) => {
     }));
 
     socket.on("toggle_gnome", () => {
+        const player = scores.find((entry) => entry[0] === socket.id);
+        if (!player) {
+            return;
+        }
         gnome = !gnome;
         io.emit("toggle_gnome_button_status", gnome);
+        emitServerMessage(`${player[1]} ${gnome ? "enabled" : "disabled"} gnome.`);
         if (!gnome){
             gnomeChance=-1;
         }
@@ -485,6 +510,65 @@ function safeAsyncHandler(label, handler) {
     };
 }
 
+function canBeginRound() {
+    if (scores.length === 0) {
+        return false;
+    }
+
+    const readyPlayers = scores.filter((entry) => entry[3] === "Ready");
+    if (readyPlayers.length === 0) {
+        return false;
+    }
+
+    if (status === "before") {
+        return readyPlayers.length === scores.length;
+    }
+
+    return scores.every((entry) => entry[3] === "Ready" || entry[3] === "Not Ready");
+}
+
+async function beginRound(socket) {
+    if (startingRound || status === "during") {
+        return;
+    }
+
+    const participants = status === "before"
+        ? new Set(scores.filter((entry) => entry[3] === "Ready").map((entry) => entry[0]))
+        : new Set([...roundPlayers, ...readyForNextRound]
+            .filter((id) => scores.some((entry) => entry[0] === id)));
+    if (participants.size === 0) {
+        return;
+    }
+
+    startingRound = true;
+    try {
+        const started = await updateRandomDream("new", socket, participants);
+        if (!started) {
+            return;
+        }
+
+        status = "during";
+        roundPlayers = participants;
+        readyForNextRound.clear();
+        guessCount = 0;
+        processedAnswers = new Set();
+        for (const player of scores) {
+            if (roundPlayers.has(player[0])) {
+                player[3] = "Guessing...";
+                player[4] = "null";
+            }
+        }
+        clearBonus();
+        io.emit("update_scores", scores);
+        scheduleRoundTimeout();
+        if (gnome) {
+            gnomeChance = Math.floor(Math.random() * 5);
+        }
+    } finally {
+        startingRound = false;
+    }
+}
+
 function finishRound() {
     if (status !== "during") {
         return;
@@ -496,6 +580,14 @@ function finishRound() {
     io.emit("all_guessed", dreamer);
     guessCount = 0;
     status = "after";
+    for (const player of scores) {
+        if (roundPlayers.has(player[0])) {
+            player[3] = "Ready";
+        } else if (readyForNextRound.has(player[0])) {
+            player[3] = "Ready";
+        }
+    }
+    io.emit("update_scores", scores);
 
     if (playerCount > 1 && scores.length > 0) {
         const orderedScores = [...scores].sort((a, b) => a[2] - b[2]);
@@ -521,7 +613,7 @@ function scheduleRoundTimeout() {
         }
         console.warn(`Round ${roundNumber} timed out. Marking unanswered players as timed out.`);
         for (const player of scores) {
-            if (player[3] !== "Ready") {
+            if (roundPlayers.has(player[0]) && player[3] !== "Guessed") {
                 player[3] = "Ready";
                 player[4] = "-----";
                 guessCount++;
@@ -539,7 +631,7 @@ function isValidAnswerSubmission(socket, name, expectedCorrect) {
 
     const player = scores.find((entry) => entry[0] === socket.id);
     const answerKey = `${socket.id}:${roundNumber}`;
-    if (!player || player[1] !== name || player[3] !== "Ready" ||
+    if (!player || player[1] !== name || !roundPlayers.has(socket.id) ||
         processedAnswers.has(answerKey)) {
         console.error(`Rejected duplicate or unauthorized answer for ${name}.`);
         return false;
@@ -553,6 +645,10 @@ function isValidAnswerSubmission(socket, name, expectedCorrect) {
 
     processedAnswers.add(answerKey);
     return true;
+}
+
+function emitServerMessage(message) {
+    io.emit("receive_message", { name: "[Server]", message });
 }
 
 function shutdownForRedis() {
@@ -638,7 +734,7 @@ var dream = "";
 var dreamer = "";
 var dreamDifficulty = null;
 var buffer = [];
-async function updateRandomDream(type, socket){
+async function updateRandomDream(type, socket, recipients = null){
     if (type === "new") {
         roundNumber++;
         if (dreamCount < 1) {
@@ -749,7 +845,14 @@ async function updateRandomDream(type, socket){
         await write("%buffer",buffer.join(","));
         console.log("dream #" + rng + " selected. It's difficulty is: " + dreamDifficulty + ". Found with counter: " + i + ". Average Rank: " + averageRank);
         console.log("Buffer: " + buffer);
-        io.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
+        const roundData = { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber };
+        if (recipients) {
+            for (const socketId of recipients) {
+                io.to(socketId).emit("get_random_dream_d", roundData);
+            }
+        } else {
+            io.emit("get_random_dream_d", roundData);
+        }
         return true;
     } else {
         socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
