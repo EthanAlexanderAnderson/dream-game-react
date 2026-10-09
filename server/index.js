@@ -6,6 +6,9 @@ const envFile = process.env.REDIS_ENV_FILE
 dotenv.config({ path: envFile });
 const Redis = require("ioredis");
 const redisUrl = process.env.REDIS_URL;
+if (!redisUrl) {
+    throw new Error(`REDIS_URL is not configured in ${envFile}`);
+}
 const client = new Redis(redisUrl, redisUrl.startsWith("rediss://") ? {
     tls: {
         rejectUnauthorized: false
@@ -18,6 +21,11 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 app.use(cors());
 const server = http.createServer(app);
+server.on("error", (error) => {
+    console.error(`HTTP server error: ${error.message}`);
+    process.exitCode = 1;
+    process.exit(1);
+});
 app.use(express.static(path.join(__dirname, '../build')));
 app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
 
@@ -26,10 +34,6 @@ const io = new Server(server, {
       origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/", "https://dreamgame.ethananderson.ca/"], // FOR PROD
       methods: ["GET", "POST"],
     },
-});
-
-server.listen(process.env.PORT || 3001, () => {
-    console.log("SERVER IS RUNNING");
 });
 
 // dreamgame variables
@@ -55,13 +59,26 @@ let gnome = false;
 var gnomeChance = -1;
 let roundNumber = 0;
 let dreamCount = 0;
+let startingRound = false;
+let roundTimer = null;
+let processedAnswers = new Set();
+let shuttingDownForRedis = false;
+
+client.on("error", (error) => {
+    console.error(`Redis connection error: ${error.message}`);
+    shutdownForRedis();
+});
+
+client.on("end", () => {
+    shutdownForRedis();
+});
 
 // receiving socket stuff goes in this func
 io.on("connection", (socket) => {
 
-    updateStats().catch((error) => {
-        console.error(`Failed to load player stats: ${error.message}`);
-    });
+    socket.emit("update_stats", stats);
+    socket.emit("update_PFPs", PFPs);
+    socket.emit("update_scores", scores);
 
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
@@ -74,42 +91,39 @@ io.on("connection", (socket) => {
                 guessCount--;
             }
 
-            // prevents bricking from mid-round leavers
-            if (guessCount === playerCount && guessCount !== 0){
-                console.log("server side all guessed: "+ dreamer);
-                io.emit("all_guessed", dreamer);
-                guessCount = 0;
-                status = "after";
-            }
         }        
         if (playerCount <= 0){
             playerCount = 0;
             gnome = false;
             gnomeChance = -1;
+            status = "before";
+            clearTimeout(roundTimer);
+            roundTimer = null;
         }
         if (playerCount <= 0 || guessCount <= 0){
             guessCount = 0;
         }
         scores = scores.filter(subArr => !subArr.includes(socket.id));
+        if (status === "during" && playerCount > 0 &&
+            scores.every((entry) => entry[3] === "Ready")) {
+            finishRound();
+        }
         io.emit("update_scores", scores);
         console.log("Player Count: " + playerCount + " --- Guess Count: " + guessCount);
       });
   
     // After new player selects their name
-    socket.on("player_join", async (name) => {
+    socket.on("player_join", safeAsyncHandler("player_join", async (name) => {
+        if (typeof name !== "string" || !names.includes(name)) {
+            console.error(`Rejected invalid player name: ${name}`);
+            return;
+        }
         console.log(`User Connected: ${socket.id} ${name}`);
         //socket.broadcast.emit("update_players", name);
         if (!scores.some(item => item[1] === name)){
             // if no players connected when a player joins, reset round number
             if (playerCount === 0) {
                 roundNumber = 0;
-                // and load saved buffer
-                try {
-                    await loadBuffer();
-                } catch (error) {
-                    console.error(`Failed to load dream buffer: ${error.message}`);
-                    return;
-                }
             }
             playerCount++;
             // scores variable items: id, name, score, ready, guess, skillrating, scorePrev, bonus Array
@@ -124,40 +138,54 @@ io.on("connection", (socket) => {
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
         io.emit("toggle_gnome_button_status", gnome);
-        try {
-            await updatePFPs();
-        } catch (error) {
-            console.error(`Failed to load profile pictures: ${error.message}`);
-        }
-    });
+        io.emit("update_PFPs", PFPs);
+    }));
 
     // After new player selects their name
-    socket.on("get_random_dream_u", async (data) => {
-        // this if statement with new/refresh stops mid-round joiners from triggering new dream
-        if (!(status === "during")){
-            const started = await updateRandomDream("new", socket);
-            if (!started) {
-                return;
-            }
-            status = "during";
-            setReady("all", "Waiting...");
-            clearBonus();
-            io.emit("update_scores", scores);
-            // only a 20% chance of gnome appearing if gnome is enabled
-            if (gnome) {
-                gnomeChance = Math.floor(Math.random() * 5);
-            }
-        } else {
-            updateRandomDream("refresh", socket);
-        }
-    });
-
-    socket.on("guess", (guess) => {
-        // break if undefined
-        if ( getName(socket) === undefined ) {
+    socket.on("get_random_dream_u", safeAsyncHandler("get_random_dream_u", async () => {
+        if (!scores.some((entry) => entry[0] === socket.id)) {
+            console.error(`Rejected round request from unregistered socket ${socket.id}`);
             return;
         }
-        console.log("Guess #" + guessCount + "   Of:" + guess + "   From guesser: " + getName(socket));
+        if (startingRound) {
+            return;
+        }
+        // this if statement with new/refresh stops mid-round joiners from triggering new dream
+        if (!(status === "during")){
+            startingRound = true;
+            try {
+                const started = await updateRandomDream("new", socket);
+                if (!started) {
+                    return;
+                }
+                status = "during";
+                processedAnswers = new Set();
+                setReady("all", "Waiting...");
+                clearBonus();
+                io.emit("update_scores", scores);
+                scheduleRoundTimeout();
+                // only a 20% chance of gnome appearing if gnome is enabled
+                if (gnome) {
+                    gnomeChance = Math.floor(Math.random() * 5);
+                }
+            } finally {
+                startingRound = false;
+            }
+        } else {
+            await updateRandomDream("refresh", socket);
+        }
+    }));
+
+    socket.on("guess", (guess) => {
+        const player = scores.find((entry) => entry[0] === socket.id);
+        if (!player || status !== "during" || player[3] === "Ready") {
+            return;
+        }
+        if (typeof guess !== "string" || guess.length > 200) {
+            console.error(`Rejected invalid guess from ${player[1]}`);
+            return;
+        }
+        console.log("Guess #" + guessCount + "   Of:" + guess + "   From guesser: " + player[1]);
         guessCount++;
         setReady(socket, "Ready");
         setGuess(socket, guess);
@@ -171,43 +199,22 @@ io.on("connection", (socket) => {
             dreamer = "Gnome";
         }
         if (guessCount === playerCount){
-            console.log("Server side all guessed. Dreamer: "+ dreamer);
-            io.emit("all_guessed", dreamer);
-            guessCount = 0;
-            status = "after";
-
-            // increment bottom feeder streak counter
-            if (playerCount > 1) {
-                let minSubarray = scores[0];
-                let nextMinSubarray = scores[0];
-                for (let i = 1; i < scores.length; i++) {
-                    if (scores[i][2] < minSubarray[2]) {
-                        minSubarray = scores[i];
-                    }
-                }
-                for (let i = 1; i < scores.length; i++) {
-                    if (scores[i][2] < nextMinSubarray[2] && scores[i][2] > minSubarray[2]) {
-                        nextMinSubarray = scores[i];
-                    }
-                }
-                // only increment streak if the bottom feeder is the same as last round and the new score is less than half of the next lowest score
-                if (bottomFeeder.name === minSubarray[1] && minSubarray[2] < (nextMinSubarray[2] / 2)) {
-                    bottomFeeder.streak++;
-                } else {
-                    bottomFeeder.name = minSubarray[1];
-                    bottomFeeder.streak = 1;
-                }
-            }
+            finishRound();
         }
     });
 
     socket.on("send_message", (data) => {
+        const player = scores.find((entry) => entry[0] === socket.id);
+        if (!player || !data || typeof data.message !== "string" ||
+            data.message.length === 0 || data.message.length > 500) {
+            return;
+        }
         let message = data.message;
-        let name = data.name;
+        let name = player[1];
         io.emit('receive_message', { message, name });
     });
 
-    socket.on("correct", async (name) => {
+    socket.on("correct", safeAsyncHandler("correct", async (name) => {
         
         let statindex = -1;
         let scoreindex = -1;
@@ -215,6 +222,9 @@ io.on("connection", (socket) => {
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
         if (!isValidPlayerIndexes(statindex, scoreindex)) {
             console.error(`Cannot process correct answer for unknown player: ${name}`);
+            return;
+        }
+        if (!isValidAnswerSubmission(socket, name, true)) {
             return;
         }
         if (!isValidRoundState()) {
@@ -359,15 +369,18 @@ io.on("connection", (socket) => {
             await write("%difficulty", difficulty.join(","));
         }
         io.emit("update_scores", scores);
-    });
+    }));
 
-    socket.on("incorrect", async (name) => {
+    socket.on("incorrect", safeAsyncHandler("incorrect", async (name) => {
         let statindex = -1;
         let scoreindex = -1;
         let dreamerindex = -1;
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
         if (!isValidPlayerIndexes(statindex, scoreindex)) {
             console.error(`Cannot process incorrect answer for unknown player: ${name}`);
+            return;
+        }
+        if (!isValidAnswerSubmission(socket, name, false)) {
             return;
         }
         if (!isValidRoundState()) {
@@ -451,7 +464,7 @@ io.on("connection", (socket) => {
         }
 
         io.emit("update_scores", scores);
-    });
+    }));
 
     socket.on("toggle_gnome", () => {
         gnome = !gnome;
@@ -461,6 +474,98 @@ io.on("connection", (socket) => {
         }
     });
 });
+
+function safeAsyncHandler(label, handler) {
+    return async (...args) => {
+        try {
+            await handler(...args);
+        } catch (error) {
+            console.error(`${label} failed: ${error.message}`);
+        }
+    };
+}
+
+function finishRound() {
+    if (status !== "during") {
+        return;
+    }
+
+    clearTimeout(roundTimer);
+    roundTimer = null;
+    console.log("Server side all guessed. Dreamer: " + dreamer);
+    io.emit("all_guessed", dreamer);
+    guessCount = 0;
+    status = "after";
+
+    if (playerCount > 1 && scores.length > 0) {
+        const orderedScores = [...scores].sort((a, b) => a[2] - b[2]);
+        const minSubarray = orderedScores[0];
+        const nextMinSubarray = orderedScores.find((entry) => entry[2] > minSubarray[2]);
+        if (nextMinSubarray &&
+            bottomFeeder.name === minSubarray[1] &&
+            minSubarray[2] < (nextMinSubarray[2] / 2)) {
+            bottomFeeder.streak++;
+        } else {
+            bottomFeeder.name = minSubarray[1];
+            bottomFeeder.streak = 1;
+        }
+    }
+}
+
+function scheduleRoundTimeout() {
+    clearTimeout(roundTimer);
+    const roundSeconds = 10 + Math.floor((typeof dream === "string" ? dream.length : 0) / 15) + 5;
+    roundTimer = setTimeout(() => {
+        if (status !== "during") {
+            return;
+        }
+        console.warn(`Round ${roundNumber} timed out. Marking unanswered players as timed out.`);
+        for (const player of scores) {
+            if (player[3] !== "Ready") {
+                player[3] = "Ready";
+                player[4] = "-----";
+                guessCount++;
+            }
+        }
+        finishRound();
+    }, roundSeconds * 1000);
+}
+
+function isValidAnswerSubmission(socket, name, expectedCorrect) {
+    if (status !== "after") {
+        console.error(`Rejected answer for ${name}: round is not waiting for answers.`);
+        return false;
+    }
+
+    const player = scores.find((entry) => entry[0] === socket.id);
+    const answerKey = `${socket.id}:${roundNumber}`;
+    if (!player || player[1] !== name || player[3] !== "Ready" ||
+        processedAnswers.has(answerKey)) {
+        console.error(`Rejected duplicate or unauthorized answer for ${name}.`);
+        return false;
+    }
+
+    const isCorrect = player[4] === dreamer;
+    if (isCorrect !== expectedCorrect) {
+        console.error(`Rejected inconsistent answer result for ${name}.`);
+        return false;
+    }
+
+    processedAnswers.add(answerKey);
+    return true;
+}
+
+function shutdownForRedis() {
+    if (shuttingDownForRedis) {
+        return;
+    }
+    shuttingDownForRedis = true;
+    console.error("Redis is unavailable. Shutting down the game server.");
+    clearTimeout(roundTimer);
+    io.close();
+    server.close(() => process.exit(1));
+    setTimeout(() => process.exit(1), 5000).unref();
+}
 
 
 // helper funcs -----------------------------
@@ -690,12 +795,11 @@ async function normalizePlayerStats(name, value) {
 }
 
 async function updatePFPs() {
-    PFPs = []
-    for (let n of names) {
-        const value = await fetch("$" + n);
-        const profilePicture = await getValidProfilePicture(value, n);
-        PFPs.push([n, profilePicture]);
-    }
+    PFPs = await Promise.all(names.map(async (name) => {
+        const value = await fetch("$" + name);
+        const profilePicture = await getValidProfilePicture(value, name);
+        return [name, profilePicture];
+    }));
     io.emit("update_PFPs", PFPs);
 }
 
@@ -879,16 +983,6 @@ function setIndexes(name) {
 }
 
 /* notes
-alright so
-any time you want to ping redis for fucking anything
-you need to use async and await
-so
-have your socket.on call some random async function
-(IT CAN'T DO ANYTHING ELSE)
-and then have that random async function do your dirty work
-and use await for every fetch
-then use the value returned by fetch directly
-
 naming conventions:
 fetch = get from redis
 write = set to redis
@@ -898,3 +992,19 @@ update = server to client
 send = client to server
 request = client to sever expecting a return update
 */
+
+async function initialize() {
+    await client.ping();
+    await updateStats();
+    await loadBuffer();
+    await updatePFPs();
+
+    server.listen(process.env.PORT || 3001, () => {
+        console.log("SERVER IS RUNNING");
+    });
+}
+
+initialize().catch((error) => {
+    console.error(`Server initialization failed: ${error.message}`);
+    shutdownForRedis();
+});
