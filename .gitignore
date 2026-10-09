@@ -1,4 +1,4 @@
 server/.env
 server/.env.local
-node_modules/.cache/
-build/
+build
+node_modules
