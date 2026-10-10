@@ -38,13 +38,6 @@ img {
     margin-top: 1em;
 }
 
-#messageSection, #profileSection {
-    max-height: 590px;
-    background-color: #333333;
-    padding: 1em;
-    border-radius: 1em;
-}
-
 #profileSectionHeader {
     display: flex;
     flex-direction: column;
@@ -191,7 +184,7 @@ li {
 }
 
 /* Mobile and smaller */
-@media (max-width: 576px) {  
+@media (max-width: 900px) {
     #profileSectionHeader {
         display: flex;
         flex-direction: row-reverse;
@@ -205,13 +198,6 @@ li {
 
     .col {
         padding: 0px;
-    }
-}
-
-/* more than large */
-@media (min-width: 1640px) {  
-    #messageSection {
-        min-height: 590px;
     }
 }
 
@@ -270,4 +256,621 @@ li {
 
 .notReadyStatus {
   color: red;
+}
+
+/* Modern responsive game shell */
+:root {
+    --ink: #f5f7fb;
+    --muted: #9aa8bf;
+    --surface: rgba(19, 28, 48, 0.82);
+    --surface-strong: #18243c;
+    --surface-soft: rgba(255, 255, 255, 0.055);
+    --line: rgba(255, 255, 255, 0.11);
+    --accent: #7c8cff;
+    --accent-bright: #9eabff;
+    --success: #51dfac;
+    --danger: #ff7188;
+    --radius: 22px;
+    --shadow: 0 20px 60px rgba(2, 6, 23, 0.34);
+}
+
+html,
+body,
+#root {
+    min-height: 100%;
+}
+
+html {
+    background: #080d1c;
+}
+
+body {
+    margin: 0;
+    color: var(--ink);
+    background:
+        radial-gradient(circle at 8% 0%, rgba(124, 140, 255, 0.2), transparent 32rem),
+        radial-gradient(circle at 92% 12%, rgba(81, 223, 172, 0.1), transparent 28rem),
+        #080d1c;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+#root {
+    background: transparent;
+}
+
+.App {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    gap: clamp(14px, 2vw, 28px);
+    align-items: start;
+    width: min(1800px, calc(100% - clamp(24px, 5vw, 96px)));
+    margin: 0 auto;
+    padding: clamp(18px, 3vw, 42px) 0;
+    font-size: clamp(14px, 0.35vw + 12px, 18px);
+    text-align: left;
+}
+
+/* Override Bootstrap's 1320px container cap on large displays. */
+.App.container {
+    width: min(2200px, calc(100% - clamp(32px, 6vw, 144px)));
+    max-width: 2200px;
+}
+
+.App > .col {
+    min-width: 0;
+    padding: 0;
+}
+
+.App > .order-sm-2 {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+.welcome-state {
+    grid-template-columns: minmax(0, 760px);
+    justify-content: center;
+    min-height: 100vh;
+    align-items: center;
+}
+
+.welcome-state > .order-sm-2 {
+    grid-column: 1;
+    width: 100%;
+    justify-content: center;
+}
+
+.welcome-state #textSection,
+.welcome-state #difficultySection {
+    display: none;
+}
+
+.welcome-state #buttonSection {
+    padding: clamp(28px, 5vw, 56px);
+}
+
+.welcome-state #buttonSection p {
+    margin-bottom: 28px;
+    font-size: clamp(1rem, 1.4vw, 1.25rem);
+}
+
+.welcome-state #buttonSection .guessButton {
+    min-width: clamp(105px, 15vw, 145px);
+    margin: 6px;
+    padding: 13px 18px;
+}
+
+#textSection,
+#buttonSection,
+#guessButtons,
+#controlButtons,
+#playerSection,
+#imageSection,
+#messageSection,
+#profileSection,
+#ranks,
+#rankSection,
+#leaderboard {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+#textSection {
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+    padding: clamp(24px, 5vw, 68px) clamp(20px, 4vw, 64px);
+    background:
+        linear-gradient(135deg, rgba(124, 140, 255, 0.2), transparent 46%),
+        linear-gradient(180deg, rgba(27, 39, 68, 0.94), rgba(14, 22, 41, 0.96));
+    font-size: min(var(--dream-font-size, 1.5rem), 8vw, 10vh);
+    font-weight: 650;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+#textSection::after {
+    position: absolute;
+    right: -60px;
+    bottom: -110px;
+    width: 260px;
+    height: 260px;
+    border: 1px solid rgba(158, 171, 255, 0.25);
+    border-radius: 50%;
+    box-shadow: 0 0 0 28px rgba(158, 171, 255, 0.035), 0 0 0 58px rgba(158, 171, 255, 0.025);
+    content: "";
+    pointer-events: none;
+}
+
+#gnomeStatus,
+#difficultyText,
+#resultHeader,
+#resultBody {
+    position: relative;
+    z-index: 1;
+}
+
+#gnomeStatus {
+    margin-bottom: 14px;
+    color: var(--danger) !important;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+#resultHeader {
+    margin-bottom: 10px;
+    font-size: min(calc(var(--dream-font-size, 1.5rem) * 1.1), 8vw, 10vh);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+#resultBody {
+    margin: 0;
+    color: var(--muted);
+    font-size: min(calc(var(--dream-font-size, 1.5rem) * 0.55), 4vw, 5vh);
+    line-height: 1.65;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+#difficultySection {
+    min-height: 0;
+    margin: -34px 18px 0;
+    padding: 0 18px 14px;
+    position: relative;
+    z-index: 2;
+}
+
+#difficultyText {
+    display: inline-flex;
+    padding: 8px 13px;
+    border: 1px solid rgba(158, 171, 255, 0.24);
+    border-radius: 999px;
+    background: rgba(10, 16, 32, 0.74);
+    color: var(--accent-bright);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+#difficultyText:empty {
+    display: none;
+}
+
+#buttonSection,
+#guessButtons,
+#controlButtons {
+    padding: clamp(16px, 2vw, 24px);
+    background: var(--surface);
+    text-align: center;
+}
+
+#buttonSection p {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.btn {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: none;
+    font-weight: 750;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.btn:hover,
+.btn:focus-visible {
+    border-color: rgba(158, 171, 255, 0.7);
+    box-shadow: 0 8px 24px rgba(9, 15, 37, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: rgba(124, 140, 255, 0.16);
+    color: var(--accent-bright);
+}
+
+.btn-light {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #0b1124;
+}
+
+.guessButton {
+    min-width: clamp(76px, 9vw, 115px);
+    margin: 5px;
+    padding: 11px 15px;
+}
+
+#controlButtons .btn-light {
+    min-width: min(100%, 260px);
+    padding: 13px 28px;
+}
+
+#toggleGnome {
+    height: 34px;
+    width: 34px;
+}
+
+.gnome {
+    margin-top: 14px;
+    border-radius: 14px;
+    background: var(--surface-soft);
+    filter: grayscale(100%);
+}
+
+#playerSection,
+#imageSection {
+    overflow: hidden;
+    background: var(--surface);
+}
+
+#playerSection {
+    padding: 8px;
+}
+
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--ink);
+    --bs-table-border-color: var(--line);
+    margin: 0;
+    overflow: hidden;
+    border-radius: 15px;
+    background: transparent;
+}
+
+.table thead th {
+    border-bottom-width: 1px;
+    color: var(--muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.table td,
+.table th {
+    padding: 13px 10px;
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    transition: background 140ms ease;
+}
+
+.table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.PFP {
+    height: 30px;
+    width: 30px;
+    margin-right: 9px;
+    border: 2px solid rgba(158, 171, 255, 0.35);
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+}
+
+.readyStatus,
+.notReadyStatus {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.readyStatus {
+    border: 1px solid rgba(81, 223, 172, 0.25);
+    background: rgba(81, 223, 172, 0.12);
+    color: var(--success);
+}
+
+.notReadyStatus {
+    border: 1px solid rgba(255, 113, 136, 0.25);
+    background: rgba(255, 113, 136, 0.1);
+    color: var(--danger);
+}
+
+#imageSection {
+    min-height: 160px;
+    padding: 10px;
+}
+
+#imageSection img {
+    display: block;
+    width: 100%;
+    max-height: min(58vh, 620px);
+    border-radius: 16px;
+    object-fit: cover;
+}
+
+#messageSection,
+#profileSection,
+#ranks,
+#rankSection,
+#leaderboard {
+    margin-bottom: 16px;
+    padding: clamp(16px, 2vw, 24px);
+    background: var(--surface);
+}
+
+.roundCount,
+.profileName {
+    margin-bottom: 16px;
+    color: var(--ink);
+    font-size: clamp(1rem, 1.4vw, 1.35rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+#messageBox {
+    min-height: 220px;
+    max-height: 78%;
+    overflow: auto;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: rgba(7, 12, 27, 0.55);
+}
+
+#messageBox > ul {
+    margin: 0;
+    padding: 8px;
+}
+
+#messageBox li {
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 1rem;
+}
+
+#messageBox li:nth-child(even) {
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.message .form-control {
+    min-height: 44px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--ink);
+}
+
+.message .form-control::placeholder {
+    color: #74819a;
+}
+
+#messageSubmit {
+    margin-top: 8px;
+    border: 0;
+    background: var(--surface-strong);
+    color: var(--ink);
+}
+
+.profileImage {
+    display: block;
+    width: min(100%, 220px);
+    aspect-ratio: 1;
+    margin: 0 auto 20px;
+    border: 3px solid rgba(158, 171, 255, 0.35);
+    border-radius: 24px;
+    object-fit: cover;
+    box-shadow: 0 14px 32px rgba(2, 6, 23, 0.35);
+}
+
+#profileSection li,
+#rankSection li,
+#leaderboard li {
+    margin: 0;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 9px;
+    color: var(--muted);
+    list-style: none;
+}
+
+.mod1 {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.note {
+    color: var(--muted);
+}
+
+#ranks {
+    padding: clamp(16px, 2vw, 24px);
+    background: var(--surface);
+}
+
+/* Match Bootstrap accordion components to the app's dark glass surfaces. */
+.accordion,
+.accordion-item,
+.accordion-header,
+.accordion-button,
+.accordion-collapse {
+    border-color: var(--line);
+}
+
+.accordion-item {
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.accordion-button {
+    background: var(--surface-strong);
+    color: var(--ink);
+    font-weight: 800;
+}
+
+.accordion-button:not(.collapsed) {
+    background: rgba(124, 140, 255, 0.16);
+    box-shadow: none;
+    color: var(--accent-bright);
+}
+
+.accordion-button::after {
+    filter: invert(1) brightness(1.5);
+}
+
+.accordion-button:focus {
+    border-color: rgba(158, 171, 255, 0.7);
+    box-shadow: 0 0 0 3px rgba(124, 140, 255, 0.18);
+}
+
+.accordion-collapse {
+    background: var(--surface);
+}
+
+.accordion-collapse .table {
+    margin-bottom: 0;
+}
+
+@media (min-width: 1050px) {
+    #messageSection,
+    #profileSection {
+        box-sizing: border-box;
+        height: 720px;
+    }
+
+    #messageSection {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #messageSection #messageBox {
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
+    }
+
+    #messageSection > form {
+        flex: 0 0 auto;
+    }
+}
+
+@media (max-width: 1050px) {
+    .App {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .App > .order-3 {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+}
+
+@media (max-width: 700px) {
+    .App {
+        display: flex;
+        flex-direction: column;
+        width: min(100% - 24px, 620px);
+        padding-top: 12px;
+    }
+
+    .welcome-state {
+        min-height: 100vh;
+    }
+
+    .App > .col {
+        width: 100%;
+    }
+
+    .App > .order-1,
+    .App > .order-3 {
+        display: block;
+    }
+
+    .App > .order-sm-2 {
+        order: 1;
+    }
+
+    .App > .order-1 {
+        order: 2;
+    }
+
+    .App > .order-3 {
+        order: 3;
+    }
+
+    #textSection {
+        padding: clamp(20px, 5vh, 28px) 22px clamp(36px, 8vh, 54px);
+    }
+
+    #playerSection {
+        overflow-x: auto;
+    }
+
+    @media (max-height: 700px) and (min-width: 701px) {
+        #textSection {
+            padding-block: clamp(16px, 4vh, 30px);
+        }
+    }
+
+    .table {
+        min-width: 430px;
+    }
+
+    #messageBox {
+        min-height: 150px;
+    }
+}
+
+@media (min-width: 576px) and (max-width: 700px) {
+    .App > .order-sm-2 {
+        order: 1 !important;
+    }
+
+    .App > .order-1 {
+        order: 2 !important;
+    }
+
+    .App > .order-3 {
+        order: 3 !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
 }

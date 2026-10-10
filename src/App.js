@@ -70,6 +70,9 @@ function App() {
     socket.emit("get_random_dream_u");
   };
 
+  // TODO: this is stil making really long dreams too small
+  const dreamFontSize = Math.max(1.25, Math.min(2.8, 2.8 - Math.max(0, textSection.length - 40) / 360));
+
   // toggle gnome mode on or off
   const toggleGnome = () => {
     socket.emit("toggle_gnome");
@@ -299,7 +302,7 @@ function App() {
 
   // display
   return (
-    <div className="App container row mx-auto">
+    <div className={`App container row mx-auto${name === "" ? " welcome-state" : ""}`}>
 
       <div id="jumpscare" className="jumpscare">
           <img src="gnome_256.png" alt="jumpscare gnome" />
@@ -307,7 +310,7 @@ function App() {
       
       <div className='col order-sm-2'>
         
-        <div id='textSection'>
+        <div id='textSection' style={{ "--dream-font-size": `${dreamFontSize}rem` }}>
           <div id="gnomeStatus"  style={{color: "red"}}>{gnome ? "Gnome mode is Active" : ""}</div>
           <div id='resultHeader' style={{color: status === "after" ? resultSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status === "after" ? 'bold' : 'normal'}}>{resultSection.split('\n')[0]}</div>
           <div id='resultBody'>
@@ -337,7 +340,7 @@ function App() {
       </div>
 
       {name !== "" ? ( // only render this section after name is set
-        <div className='col-sm-3 order-1'  style={{ padding: "0px" }}>
+        <div className='order-1'  style={{ padding: "0px" }}>
           <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages} roundNumber={roundNumber}/>
 
           <RankSection stats={stats} PFPs={PFPs}/>
@@ -345,7 +348,7 @@ function App() {
       ) : null }
 
       {name !== "" ? ( // only render this section after name is set
-        <div className='col-sm-3 order-3'  style={{ padding: "0px" }}>
+        <div className='order-3'  style={{ padding: "0px" }}>
           <ProfileSection name={name} stats={stats} PFPs={PFPs}/>
 
           <Leaderboard stats={stats} PFPs={PFPs}/>

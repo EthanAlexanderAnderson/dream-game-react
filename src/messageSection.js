@@ -1,18 +1,17 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 function MessageSection(props) {
     
-    // max number of messages
-    let messages = props.messages.slice(-10);
-
-    //max number of charcters in message box
-    let sum = messages.reduce((acc, curr) => acc + curr.length, 0);
-    while (sum > 600) {
-        let removed = messages.shift();
-        sum -= removed.length;
-      }
+    let messages = props.messages;
 
     const inputRef = useRef(null);
+    const messageBoxRef = useRef(null);
+
+    useEffect(() => {
+        if (window.matchMedia("(min-width: 1050px)").matches && messageBoxRef.current) {
+            messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+        }
+    }, [props.messages.length]);
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -27,7 +26,7 @@ function MessageSection(props) {
         return (
             <div id="messageSection">
                 <div className="roundCount">Round: {props.roundNumber}</div>
-                <div id="messageBox" className="message">
+                <div id="messageBox" className="message" ref={messageBoxRef}>
                     <ul>
                     {messages.map((item, index) => (
                         <li key={index} className={"mod"+index%2}>{item}</li>
