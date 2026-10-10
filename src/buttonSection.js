@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
+import GameSettings from "./gameSettings";
 
-function ButtonSection({ name, setStatus, playerJoin, status, ready, guess, disabled, toggleGnome, gnomeButtonStatus }) {
+function ButtonSection({ name, playerJoin, status, ready, guess, disabled, settings, settingsOpen, toggleSettings, canEditSettings, saveSettings }) {
+    const [settingsDirty, setSettingsDirty] = useState(false);
     // These names correspond to the fixed player records loaded by the server.
     let profileNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
     let guessNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+    const enabledGuessNames = settings?.allowedDreamers
+        ? guessNames.filter((guessName) => settings.allowedDreamers.includes(guessName))
+        : guessNames;
     let classes = []
 
     let j = 0;
@@ -28,26 +33,35 @@ function ButtonSection({ name, setStatus, playerJoin, status, ready, guess, disa
         );
     } else if (status === "during") {
         return(
-            <div id="guessButtons">
-                {guessNames.map((item, index) => (
-                    <button key={index} className={classes[index]} onClick={() => guess(item)}>{item}</button>
-                ))}
-            </div>
+            <>
+                <div id="guessButtons">
+                    {enabledGuessNames.map((item) => {
+                        const index = guessNames.indexOf(item);
+                        return (
+                        <button key={item} className={classes[index]} onClick={() => guess(item)}>{item}</button>
+                        );
+                    })}
+                </div>
+                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />
+            </>
         );
     }  else if (status === "guessed") {
         return(
             <div>
                 <p>Waiting for others to guess...</p>
+                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />
             </div>
         );
+    }
+    else if (status === "after") {
+        return <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />;
     }
     else if (status === "before") {
         return(
             <div id="controlButtons">
                 {/* Readiness is sent to the server; it starts the round when eligible. */}
-                <button className="btn btn-light" onClick={() => ready()}>Ready</button>
-                <br></br>
-                <button className={gnomeButtonStatus ? 'btn gnome toggled' : 'btn gnome'} onClick={() => toggleGnome()}><img id="toggleGnome" src="gnome_256.png" alt="toggle gnome mode"></img></button>
+                <button className="btn btn-light" onClick={() => ready()} disabled={settingsDirty}>Ready</button>
+                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />
             </div>
         );
     } 

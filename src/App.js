@@ -45,7 +45,8 @@ function App() {
   const [disabled, setDisabled] = useState([]);
   const [score, setScore] = useState(0);
   const [averageScore, setAverageScore] = useState(0);
-  const [gnomeButtonStatus, setGnomeButtonStatus] = useState(false);
+  const [gameSettings, setGameSettings] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [roundNumber, setRoundNumber] = useState(0);
   const [roundCountdown, setRoundCountdown] = useState(0);
   const countdownTimer = useRef(null);
@@ -73,15 +74,12 @@ function App() {
   // TODO: this is stil making really long dreams too small
   const dreamFontSize = Math.max(1.25, Math.min(2.8, 2.8 - Math.max(0, textSection.length - 40) / 360));
 
-  // toggle gnome mode on or off
-  const toggleGnome = () => {
-    socket.emit("toggle_gnome");
+  const saveGameSettings = (nextSettings) => {
+    socket.emit("save_game_settings", nextSettings);
   };
 
-  const toggleGnomeButtonStatus = (gnomeStatus) => {
-    setGnomeButtonStatus(gnomeStatus);
-    gnome = gnomeStatus;
-  };
+  const canEditGameSettings = gameSettings?.editable === true &&
+    scores.some((player) => player[1] === name && player[3] === "Not Ready");
 
   // player guesses
   const guess = (data) => {
@@ -174,15 +172,16 @@ function App() {
     setScore(scores[position][2]);
 
     // gnome mode
+    gnome = data.gnomeEnabled === true && data.gnomeChance >= 1 && data.gnomeChance <= (gameSettings?.gnomeFrequency || 20);
     if (gnome) {
       const split = data.dream.split(' ');
-      // if dream is long enough and 20% chance is reached (gnomeChance can be 0 to 4)
-      if (split.length > 16 && data.gnomeChance === 0) {
-        // if dream is long enough, check for a 5 letter word in the middle of the dream
-        // start the loop at the middle of the dream, and end it 5 words before the end of the dream
-        for (let i = (Math.floor(split.length / 2)); i < (split.length - 5); i++) {
-          // if a word is 5 letters long, split the dream into two sections so that we can add a "Gnome" to the middle, and set answer to "Gnome"
-          if (split[i].length === 5) {
+      if (split.length >= 12) {
+        // If the dream is long enough, check for a five-letter word in the middle.
+        // start the loop at the middle of the dream, and end it 4 words before the end of the dream
+        // basically gnome can't be in the first or last 4 words of the dream
+        for (let i = (Math.floor(split.length / 2) - 1); i < (split.length - 4); i++) {
+          // if a word is 4 - 6 letters long, split the dream into two sections so that we can add a "Gnome" to the middle, and set answer to "Gnome"
+          if (split[i].length >= 4 && split[i].length <= 6) {
             setTextSection(split.slice(0, i).join(" ") + " ");
             setTextSectionTwo(split.slice(i+1, split.length).join(" "));
             answer = "Gnome";
@@ -268,6 +267,10 @@ function App() {
     setTimeout(function(){ jumpscare.classList.remove("show"); }, 1500);
   }
 
+  const updateGameSettingsFromServer = (data) => {
+  setGameSettings(data);
+  };
+
   // receive from socket
   useEffect(() => {
 
@@ -278,7 +281,7 @@ function App() {
     socket.on("update_scores", updateScores);
     socket.on("update_stats", updateStats);
     socket.on("update_PFPs", updatePFPs);
-    socket.on("toggle_gnome_button_status", toggleGnomeButtonStatus);
+    socket.on("update_game_settings", updateGameSettingsFromServer);
      
     return () => {
       socket.off("receive_message");
@@ -288,7 +291,7 @@ function App() {
       socket.off("update_scores");
       socket.off("update_stats");
       socket.off("update_PFPs");
-      socket.off("toggle_gnome_button_status");
+      socket.off("update_game_settings");
     };
 
   }, [allGuessed, updateScores]);
@@ -329,9 +332,9 @@ function App() {
           <div id='difficultyText' title={difficulty}>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
         </div>
 
-        <ButtonSection name={name} setStatus={setStatus} playerJoin={playerJoin} status={status} ready={ready} guess={guess} disabled={disabled} toggleGnome={toggleGnome} gnomeButtonStatus={gnomeButtonStatus}/>
+        <ButtonSection name={name} playerJoin={playerJoin} status={status} ready={ready} guess={guess} disabled={disabled} settings={gameSettings} settingsOpen={settingsOpen} toggleSettings={() => setSettingsOpen((open) => !open)} canEditSettings={canEditGameSettings} saveSettings={saveGameSettings}/>
 
-        <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} difficulty={difficulty} rank={rank} score={score} averageScore={averageScore} tick={tick}/>
+        <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} difficulty={difficulty} rank={rank} score={score} averageScore={averageScore} tick={tick} hintsEnabled={gameSettings?.hintsEnabled} maxHints={gameSettings?.maxHints}/>
 
         <PlayerSection name={name} scores={scores} stats={stats} status={status} PFPs={PFPs}/>
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 var previousGuess = "null";
 
-function Timer({ trigger, guess, myGuess, status, disableRandomButton, position, difficulty, rank, score, averageScore, tick }) {
+function Timer({ trigger, guess, myGuess, status, disableRandomButton, position, difficulty, rank, score, averageScore, tick, hintsEnabled = true, maxHints = 8 }) {
     const [seconds, setSeconds] = useState(0);
 
     if (myGuess !== "") { previousGuess = myGuess; }
@@ -37,10 +37,9 @@ function Timer({ trigger, guess, myGuess, status, disableRandomButton, position,
     // disable buttons at percentage of timer intervals (no disables after 80% of timer to discourage stalling) maximum 8 hints
     // if the inital time is over 75 seconds, just use 75 so they don't wait over a minute for all hints
     let initialTime = Math.min(75, maxTime);
-    for (let i = 0; i < numberOfHints; i++) {
+    for (let i = 0; hintsEnabled && i < numberOfHints && i < maxHints; i++) {
         let secondsAfterInitalTime = Math.floor(initialTime * (0.1 * (i + 1))); // 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8
         hintsArray.push(maxTime - secondsAfterInitalTime);
-        if ( i >= 7) { break; }
     }
     //console.log(hintsArray);
 

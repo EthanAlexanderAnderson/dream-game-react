@@ -40,6 +40,21 @@ const io = new Server(server, {
 
 // dreamgame variables
 let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
+const guessableNames = names.filter((name) => name !== "Guest");
+const bonusTypes = ["underdog", "streak", "bottomFeeder", "earlyBird", "irony", "loneWolf", "nonConformist", "mixedBag"];
+const defaultGameSettings = {
+    sort: "random",
+    numberRange: [0, Number.MAX_SAFE_INTEGER],
+    difficultyRange: [-5, 15],
+    lengthRange: [0, Number.MAX_SAFE_INTEGER],
+    allowedDreamers: [...guessableNames],
+    bonusPoints: true,
+    bonuses: Object.fromEntries(bonusTypes.map((type) => [type, true])),
+    hintsEnabled: true,
+    maxHints: 8,
+    gnomeEnabled: false,
+    gnomeFrequency: 20
+};
 let playerCount = 0;
 let guessCount = 0;
 let scores = []; // [ 0 id,  1 name, 2 score, 3 is ready, 4 guess, 5 skill rating, 6 previous score, 7 bonus Array ]
@@ -57,7 +72,7 @@ let bottomFeeder = {
 let earlyBird = "";
 let PFPs = [];
 const DEFAULT_PROFILE_PICTURE = "/player.png";
-let gnome = false;
+let gameSettings = cloneGameSettings();
 var gnomeChance = -1;
 let roundNumber = 0;
 let dreamCount = 0;
@@ -67,6 +82,7 @@ let processedAnswers = new Set();
 let currentRoundPlayers = new Set();
 let playersReadyForNextRound = new Set();
 let shuttingDownForRedis = false;
+let dreamCatalog = [];
 
 client.on("error", (error) => {
     console.error(`Redis connection error: ${error.message}`);
@@ -83,6 +99,7 @@ io.on("connection", (socket) => {
     socket.emit("update_stats", stats);
     socket.emit("update_PFPs", PFPs);
     socket.emit("update_scores", scores);
+    socket.emit("update_game_settings", getPublicGameSettings());
 
     socket.on("disconnect", () => {
         const name = scores.find(subarray => subarray[0] === socket.id);
@@ -99,7 +116,7 @@ io.on("connection", (socket) => {
         }        
         if (playerCount <= 0){
             playerCount = 0;
-            gnome = false;
+            gameSettings = getDefaultGameSettings();
             gnomeChance = -1;
             status = "before";
             clearTimeout(roundTimer);
@@ -153,7 +170,7 @@ io.on("connection", (socket) => {
         }
         console.log("Player Count: " + playerCount);
         io.emit("update_scores", scores);
-        io.emit("toggle_gnome_button_status", gnome);
+        io.emit("update_game_settings", getPublicGameSettings());
         io.emit("update_PFPs", PFPs);
         if (joined) {
             emitServerMessage(`${name} joined.`);
@@ -209,6 +226,10 @@ io.on("connection", (socket) => {
             console.error(`Rejected invalid guess from ${player[1]}`);
             return;
         }
+        if (guess !== "Gnome" && !gameSettings.allowedDreamers.includes(guess)) {
+            console.error(`Rejected disabled dreamer guess from ${player[1]}: ${guess}`);
+            return;
+        }
         console.log("Guess #" + guessCount + "   Of:" + guess + "   From guesser: " + player[1]);
         guessCount++;
         setReady(socket, "Guessed");
@@ -219,7 +240,7 @@ io.on("connection", (socket) => {
             earlyBird = getName(socket);
         }
         // if anyone guessed gnome, it means the gnome button exists, thus answer is gnome
-        if (guess === "Gnome") {
+        if (guess === "Gnome" && gameSettings.gnomeEnabled && gnomeChance >= 1 && gnomeChance <= gameSettings.gnomeFrequency) {
             dreamer = "Gnome";
         }
         if (guessCount === currentRoundPlayers.size){
@@ -315,7 +336,7 @@ io.on("connection", (socket) => {
                 break;
             }
         }
-        if (underdogCount > 0 && playerCount > 2) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.underdog && underdogCount > 0 && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + underdogCount) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Underdog x"+underdogCount, underdogCount]]) : el));
         }
@@ -327,17 +348,17 @@ io.on("connection", (socket) => {
         if (scores[scoreindex] && (scores[scoreindex][5] === undefined || scores[scoreindex][5] === null)) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
         }
-        if (scores[scoreindex][5] >= 5) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.streak && scores[scoreindex][5] >= 5) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Streak x"+scores[scoreindex][5], (Math.floor(parseInt(scores[scoreindex][5])/5))]]) : el));
         }
         // bottom feeder bonus
-        if (name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
+        if (gameSettings.bonusPoints && gameSettings.bonuses.bottomFeeder && name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
         // early bird bonus
-        if (name === earlyBird && playerCount > 2) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.earlyBird && name === earlyBird && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Early Bird", 1]]) : el));
         }
@@ -345,12 +366,12 @@ io.on("connection", (socket) => {
         // theres a bug here whhen the dreamer moves in the leaderboard before this point, irony is assigned not properly
         // we just need to reassign dreamerindex to the new position of the dreamer
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
-        if (scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][4] !== dreamer) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.irony && scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][4] !== dreamer) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Irony", 1]]) : el));
         }
         // lone wolf bonus
-        if (scores.every(subArr => subArr[4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.loneWolf && scores.every(subArr => subArr[4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Lone Wolf", 1]]) : el));
         // Non-conformist & Mixed Bag bonus
@@ -362,12 +383,12 @@ io.on("connection", (socket) => {
                     }
                 }
                 // Non-conformist bonus
-                if (unique.length == 2) {
+                if (gameSettings.bonuses.nonConformist && unique.length == 2) {
                     scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (playerCount-3)) : el));
                     scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Non-conformist", (playerCount-3)]]) : el));
                 } 
                 // Mixed Bag bonus
-                else if (unique.length == playerCount) {
+                else if (gameSettings.bonuses.mixedBag && unique.length == playerCount) {
                     scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (playerCount-3)) : el));
                     scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Mixed Bag", (playerCount-3)]]) : el));
                 }
@@ -446,7 +467,7 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el));
         }
         // reset streak
-        if (scores[scoreindex][5] > 0) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.streak && scores[scoreindex][5] > 0) {
             if (scores[scoreindex][5] >= 5) {
         // streak breaker bonus
                 scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[4] === dreamer ? (parseInt(el) + (Math.floor(parseInt(scores[scoreindex][5])/5))) : el));
@@ -463,7 +484,7 @@ io.on("connection", (socket) => {
             }
         }
         // bottom feeder bonus
-        if (name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
+        if (gameSettings.bonusPoints && gameSettings.bonuses.bottomFeeder && name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
@@ -490,19 +511,132 @@ io.on("connection", (socket) => {
         io.emit("update_scores", scores);
     }));
 
-    socket.on("toggle_gnome", () => {
+    socket.on("save_game_settings", safeAsyncHandler("save_game_settings", async (requestedSettings) => {
         const player = scores.find((entry) => entry[0] === socket.id);
-        if (!player) {
+        if (!player || status !== "before" || player[3] === "Ready" ||
+            !requestedSettings || typeof requestedSettings !== "object") {
             return;
         }
-        gnome = !gnome;
-        io.emit("toggle_gnome_button_status", gnome);
-        emitServerMessage(`${player[1]} ${gnome ? "enabled" : "disabled"} gnome.`);
-        if (!gnome){
-            gnomeChance=-1;
+        const proposedSettings = normalizeGameSettings(requestedSettings);
+        const selectableDreams = getSelectableDreams(proposedSettings);
+        if (selectableDreams.length < 2) {
+            console.error(`Rejected game settings from ${player[1]}: only ${selectableDreams.length} selectable dream(s).`);
+            socket.emit("game_settings_error", "At least two dreams must remain selectable.");
+            return;
         }
-    });
+        gameSettings = proposedSettings;
+        await trimBufferForGameSettings();
+        io.emit("update_game_settings", getPublicGameSettings());
+        emitServerMessage(`${player[1]} changed the game settings.`);
+    }));
 });
+
+function cloneGameSettings() {
+    return {
+        ...defaultGameSettings,
+        numberRange: [...defaultGameSettings.numberRange],
+        difficultyRange: [...defaultGameSettings.difficultyRange],
+        lengthRange: [...defaultGameSettings.lengthRange],
+        allowedDreamers: [...defaultGameSettings.allowedDreamers],
+        bonuses: { ...defaultGameSettings.bonuses }
+    };
+}
+
+function getDefaultGameSettings() {
+    const settings = cloneGameSettings();
+    settings.numberRange = [0, Math.max(0, dreamCount - 1)];
+    settings.lengthRange = [0, dreamCatalog.reduce((maximum, entry) => Math.max(maximum, entry.text.length), 0)];
+    return settings;
+}
+
+function getPublicGameSettings() {
+    return {
+        ...gameSettings,
+        numberRange: [...gameSettings.numberRange],
+        difficultyRange: [...gameSettings.difficultyRange],
+        lengthRange: [...gameSettings.lengthRange],
+        allowedDreamers: [...gameSettings.allowedDreamers],
+        bonuses: { ...gameSettings.bonuses },
+        editable: status === "before",
+        limits: {
+            dreamCount,
+            maxDreamLength: dreamCatalog.reduce((maximum, entry) => Math.max(maximum, entry.text.length), 0),
+            difficulty: [-5, 15],
+            names: [...guessableNames]
+        }
+    };
+}
+
+function normalizeRange(value, minimum, maximum) {
+    if (!Array.isArray(value) || value.length !== 2) {
+        return [minimum, maximum];
+    }
+    const first = Number(value[0]);
+    const second = Number(value[1]);
+    if (!Number.isFinite(first) || !Number.isFinite(second)) {
+        return [minimum, maximum];
+    }
+    return [
+        Math.max(minimum, Math.min(maximum, Math.min(first, second))),
+        Math.max(minimum, Math.min(maximum, Math.max(first, second)))
+    ];
+}
+
+function normalizeGameSettings(requested) {
+    const normalized = cloneGameSettings();
+    const validSorts = ["random", "newest", "oldest", "shortest", "longest", "easiest", "hardest"];
+    normalized.sort = validSorts.includes(requested.sort) ? requested.sort : normalized.sort;
+    normalized.numberRange = normalizeRange(requested.numberRange, 0, Math.max(0, dreamCount - 1));
+    normalized.difficultyRange = normalizeRange(requested.difficultyRange, -5, 15);
+    const maxLength = dreamCatalog.reduce((maximum, entry) => Math.max(maximum, entry.text.length), 0);
+    normalized.lengthRange = normalizeRange(requested.lengthRange, 0, maxLength);
+    if (Array.isArray(requested.allowedDreamers)) {
+        normalized.allowedDreamers = guessableNames.filter((name) => requested.allowedDreamers.includes(name));
+    }
+    if (normalized.allowedDreamers.length === 0) {
+        normalized.allowedDreamers = [...guessableNames];
+    }
+    normalized.bonusPoints = requested.bonusPoints !== false;
+    if (requested.bonuses && typeof requested.bonuses === "object") {
+        normalized.bonuses = Object.fromEntries(
+            bonusTypes.map((type) => [type, requested.bonuses[type] !== false])
+        );
+    }
+    normalized.hintsEnabled = requested.hintsEnabled !== false;
+    const maxHints = Number(requested.maxHints);
+    normalized.maxHints = Number.isInteger(maxHints) ? Math.max(1, Math.min(12, maxHints)) : 8;
+    const gnomeFrequency = Number(requested.gnomeFrequency);
+    normalized.gnomeFrequency = Number.isInteger(gnomeFrequency)
+        ? Math.max(1, Math.min(100, gnomeFrequency))
+        : 20;
+    normalized.gnomeEnabled = requested.gnomeEnabled === true;
+    return normalized;
+}
+
+function getSelectableDreams(settings = gameSettings) {
+    return dreamCatalog
+        .map((entry) => ({ ...entry, difficulty: parseDifficulty(String(difficulty[entry.index])) ?? 5 }))
+        .filter((entry) =>
+            entry.index >= settings.numberRange[0] &&
+            entry.index <= settings.numberRange[1] &&
+            entry.difficulty >= settings.difficultyRange[0] &&
+            entry.difficulty <= settings.difficultyRange[1] &&
+            entry.text.length >= settings.lengthRange[0] &&
+            entry.text.length <= settings.lengthRange[1] &&
+            settings.allowedDreamers.includes(entry.dreamer)
+        );
+}
+
+async function trimBufferForGameSettings() {
+    const selectableDreams = getSelectableDreams();
+    const maximumBufferLength = Math.floor(selectableDreams.length / 2);
+    const selectableIndexes = new Set(selectableDreams.map((entry) => entry.index));
+    buffer = buffer.filter((index) => selectableIndexes.has(index));
+    while (buffer.length > maximumBufferLength) {
+        buffer.shift();
+    }
+    await write("%buffer", buffer.join(","));
+}
 
 function safeAsyncHandler(label, handler) {
     // Socket handlers are wrapped so rejected async work is logged rather
@@ -554,6 +688,9 @@ async function beginRound(socket) {
 
     startingRound = true;
     try {
+        gnomeChance = gameSettings.gnomeEnabled
+            ? Math.floor(Math.random() * 100) + 1
+            : -1;
         const started = await updateRandomDream("new", socket, participants);
         if (!started) {
             return;
@@ -574,9 +711,7 @@ async function beginRound(socket) {
         clearBonus();
         io.emit("update_scores", scores);
         scheduleRoundTimeout();
-        if (gnome) {
-            gnomeChance = Math.floor(Math.random() * 5);
-        }
+        io.emit("update_game_settings", getPublicGameSettings());
     } finally {
         startingRound = false;
     }
@@ -757,14 +892,9 @@ async function updateRandomDream(type, socket, recipients = null){
         // New dreams are sent only to selected participants. This prevents a
         // mid-round joiner from entering the current round accidentally.
         roundNumber++;
-        if (dreamCount < 1) {
-            const dreamCountValue = await fetch("&dreamcount");
-            const parsedDreamCount = parseInteger(dreamCountValue, 1);
-            if (parsedDreamCount === null) {
-                console.error(`Invalid &dreamcount value: ${dreamCountValue}. Cannot start a round.`);
-                return false;
-            }
-            dreamCount = parsedDreamCount;
+        if (dreamCount < 1 || dreamCatalog.length === 0) {
+            await loadDreamCatalog();
+            gameSettings = getDefaultGameSettings();
         }
         let count = dreamCount;
         if (count > difficulty.length) {
@@ -772,83 +902,34 @@ async function updateRandomDream(type, socket, recipients = null){
             difficulty = difficulty.concat(Array(count - difficulty.length).fill(5));
             await write("%difficulty", difficulty.join(","));
         }
-        let rng = Math.floor(Math.random() * Math.floor(count));
-        let i = 0;
 
-        console.log("roundNumber: " + roundNumber);
-        // we want to favor dreams closer to the average rank of players in the game
-        let averageRank = 0;
-        if (scores.length > 0){
-            for (let i = 0; i < stats.length; i++){
-                // if the players whose rank we're looking at is in the game (in scores), count it towards the average
-                if (scores.some(item => item[1] === stats[i][0])){
-                    // if its a string convert to floating point number
-                    let rank = stats[i][7];
-                    if (typeof stats[i][7] === "string") {
-                        rank = parseFloat(stats[i][7]);
-                    }
-                    averageRank += rank;
-                }
-            }
-            averageRank = averageRank / scores.length;
-        } else {
-            console.log("ERROR: scores.length is not greater than 0: " + scores.length);
-            averageRank = 5;
-        }
-
-        // if not a number or null or undefined or under -5 or over 15, set to 5
-        if (isNaN(averageRank) || averageRank === null || averageRank === undefined || averageRank < -5 || averageRank > 15){
-            console.log("ERROR: averageRank is: " + averageRank + " with " + scores.length + " players. Setting to 5.");
-            averageRank = 5;
-        }
-        // slowly increase bounds until we find a dream
-        const maxAttempts = Math.max(100000, count * 20);
-        while (i < maxAttempts && (buffer.includes(rng) || (difficulty[rng] < (averageRank - i/10) || difficulty[rng] > (averageRank + i/10)))) 
-        {
-            // special case: if dream is within the last 20 (increasing) most recently added, add it if difficulty is between 4 and 6 (implies unsorted)
-            // upped this to 700 temporarily because we have a lot of unsorted dreams
-            if (rng > count - (700 + i) && rng < count && difficulty[rng] > 4 && difficulty[rng] < 6){
-                break;
-            }
-
-            rng = Math.floor(Math.random() * Math.floor(count));
-            i++;
-        }
-
-        if (i >= maxAttempts || buffer.includes(rng) ||
-            difficulty[rng] < (averageRank - i / 10) ||
-            difficulty[rng] > (averageRank + i / 10)) {
-            console.warn(`Unable to select a preferred dream after ${maxAttempts} attempts. Selecting randomly.`);
-            rng = Math.floor(Math.random() * Math.floor(count));
-        }
-
-        const candidateIndexes = [rng];
-        for (let offset = 1; offset < count; offset++) {
-            candidateIndexes.push((rng + offset) % count);
-        }
-
-        let selected = false;
-        for (const candidate of candidateIndexes) {
-            const candidateDream = await fetch("&dream" + candidate);
-            const candidateDreamer = await fetch("&dreamer" + candidate);
-            if (typeof candidateDream !== "string" || candidateDream.trim() === "" ||
-                typeof candidateDreamer !== "string" || candidateDreamer.trim() === "") {
-                console.error(`Missing dream data for index ${candidate}. Trying another dream.`);
-                continue;
-            }
-
-            rng = candidate;
-            dream = candidateDream;
-            dreamer = candidateDreamer;
-            selected = true;
-            break;
-        }
-
-        if (!selected) {
-            console.error("No dream records contain both dream text and a dreamer.");
+        const filteredDreams = getSelectableDreams();
+        if (filteredDreams.length === 0) {
+            console.error("Game settings filtered out every dream.");
             return false;
         }
 
+        let candidates = [...filteredDreams];
+        if (gameSettings.sort === "random") {
+            candidates.sort(() => Math.random() - 0.5);
+        } else if (gameSettings.sort === "newest") {
+            candidates.sort((a, b) => b.index - a.index);
+        } else if (gameSettings.sort === "oldest") {
+            candidates.sort((a, b) => a.index - b.index);
+        } else if (gameSettings.sort === "shortest") {
+            candidates.sort((a, b) => a.text.length - b.text.length || a.index - b.index);
+        } else if (gameSettings.sort === "longest") {
+            candidates.sort((a, b) => b.text.length - a.text.length || a.index - b.index);
+        } else if (gameSettings.sort === "easiest") {
+            candidates.sort((a, b) => a.difficulty - b.difficulty || a.index - b.index);
+        } else if (gameSettings.sort === "hardest") {
+            candidates.sort((a, b) => b.difficulty - a.difficulty || a.index - b.index);
+        }
+        const unusedCandidate = candidates.find((entry) => !buffer.includes(entry.index)) || candidates[0];
+        const selected = unusedCandidate;
+        const rng = selected.index;
+        dream = selected.text;
+        dreamer = selected.dreamer;
         const normalizedDifficulty = parseDifficulty(String(difficulty[rng]));
         if (normalizedDifficulty === null) {
             difficulty[rng] = 5;
@@ -859,13 +940,23 @@ async function updateRandomDream(type, socket, recipients = null){
         }
 
         buffer.push(rng);
-        if (buffer.length > (dreamCount / 2)) {
+        const maximumBufferLength = Math.floor(filteredDreams.length / 2);
+        while (buffer.length > maximumBufferLength) {
             buffer.shift();
         }
         await write("%buffer",buffer.join(","));
-        console.log("dream #" + rng + " selected. It's difficulty is: " + dreamDifficulty + ". Found with counter: " + i + ". Average Rank: " + averageRank);
+        console.log("dream #" + rng + " selected. Its difficulty is: " + dreamDifficulty + ".");
         console.log("Buffer: " + buffer);
-        const roundData = { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber };
+        const roundData = {
+            dream,
+            dreamer,
+            gnomeChance,
+            gnomeEnabled: gameSettings.gnomeEnabled,
+            hintsEnabled: gameSettings.hintsEnabled,
+            maxHints: gameSettings.maxHints,
+            dreamDifficulty,
+            roundNumber
+        };
         if (recipients) {
             for (const socketId of recipients) {
                 io.to(socketId).emit("get_random_dream_d", roundData);
@@ -875,7 +966,16 @@ async function updateRandomDream(type, socket, recipients = null){
         }
         return true;
     } else {
-        socket.emit("get_random_dream_d", { dream, dreamer, gnomeChance, dreamDifficulty, roundNumber } );
+        socket.emit("get_random_dream_d", {
+            dream,
+            dreamer,
+            gnomeChance,
+            gnomeEnabled: gameSettings.gnomeEnabled,
+            hintsEnabled: gameSettings.hintsEnabled,
+            maxHints: gameSettings.maxHints,
+            dreamDifficulty,
+            roundNumber
+        });
         return true;
     }
 }
@@ -1002,6 +1102,31 @@ async function loadDifficulty() {
     }
 }
 
+async function loadDreamCatalog() {
+    const countValue = await fetch("&dreamcount");
+    const parsedCount = parseInteger(countValue, 1);
+    if (parsedCount === null) {
+        throw new Error(`Invalid &dreamcount value: ${countValue}`);
+    }
+    dreamCount = parsedCount;
+    dreamCatalog = [];
+    for (let index = 0; index < dreamCount; index++) {
+        const text = await fetch("&dream" + index);
+        const dreamerName = await fetch("&dreamer" + index);
+        if (typeof text !== "string" || text.trim() === "" ||
+            typeof dreamerName !== "string" || dreamerName.trim() === "") {
+            console.error(`Skipping incomplete dream record ${index}.`);
+            continue;
+        }
+        dreamCatalog.push({
+            index,
+            text,
+            dreamer: dreamerName,
+            difficulty: parseDifficulty(String(difficulty[index])) ?? 5
+        });
+    }
+}
+
 async function loadBuffer() {
     const value = await fetch("%buffer");
     if (value === null || value === undefined || value === "") {
@@ -1124,6 +1249,8 @@ async function initialize() {
     await client.ping();
     await updateStats();
     await loadBuffer();
+    await loadDreamCatalog();
+    gameSettings = getDefaultGameSettings();
     await updatePFPs();
 
     server.listen(process.env.PORT || 3001, () => {
