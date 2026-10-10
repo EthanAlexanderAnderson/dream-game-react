@@ -6,6 +6,8 @@ const envFile = process.env.REDIS_ENV_FILE
 dotenv.config({ path: envFile });
 const Redis = require("ioredis");
 const redisUrl = process.env.REDIS_URL;
+// Redis is the authoritative game database, so fail immediately when its
+// connection settings are missing instead of starting an unplayable server.
 if (!redisUrl) {
     throw new Error(`REDIS_URL is not configured in ${envFile}`);
 }
@@ -62,8 +64,8 @@ let dreamCount = 0;
 let startingRound = false;
 let roundTimer = null;
 let processedAnswers = new Set();
-let roundPlayers = new Set();
-let readyForNextRound = new Set();
+let currentRoundPlayers = new Set();
+let playersReadyForNextRound = new Set();
 let shuttingDownForRedis = false;
 
 client.on("error", (error) => {
@@ -106,11 +108,12 @@ io.on("connection", (socket) => {
         if (playerCount <= 0 || guessCount <= 0){
             guessCount = 0;
         }
+        // Remove the socket from both the visible scoreboard and round rosters.
         scores = scores.filter(subArr => !subArr.includes(socket.id));
-        roundPlayers.delete(socket.id);
-        readyForNextRound.delete(socket.id);
+        currentRoundPlayers.delete(socket.id);
+        playersReadyForNextRound.delete(socket.id);
         if (status === "during" && playerCount > 0 &&
-            [...roundPlayers].every((id) => {
+            [...currentRoundPlayers].every((id) => {
                 const player = scores.find((entry) => entry[0] === id);
                 return !player || player[3] === "Guessed";
             })) {
@@ -164,8 +167,9 @@ io.on("connection", (socket) => {
         }
 
         if (status === "during") {
+            // A player who readies during a round must not enter that round.
             player[3] = "Ready";
-            readyForNextRound.add(socket.id);
+            playersReadyForNextRound.add(socket.id);
             io.emit("update_scores", scores);
             return;
         }
@@ -198,7 +202,7 @@ io.on("connection", (socket) => {
 
     socket.on("guess", (guess) => {
         const player = scores.find((entry) => entry[0] === socket.id);
-        if (!player || status !== "during" || !roundPlayers.has(socket.id) || player[3] !== "Guessing...") {
+        if (!player || status !== "during" || !currentRoundPlayers.has(socket.id) || player[3] !== "Guessing...") {
             return;
         }
         if (typeof guess !== "string" || guess.length > 200) {
@@ -218,7 +222,7 @@ io.on("connection", (socket) => {
         if (guess === "Gnome") {
             dreamer = "Gnome";
         }
-        if (guessCount === roundPlayers.size){
+        if (guessCount === currentRoundPlayers.size){
             finishRound();
         }
     });
@@ -501,6 +505,8 @@ io.on("connection", (socket) => {
 });
 
 function safeAsyncHandler(label, handler) {
+    // Socket handlers are wrapped so rejected async work is logged rather
+    // than becoming an unhandled rejection that can destabilize the process.
     return async (...args) => {
         try {
             await handler(...args);
@@ -520,10 +526,14 @@ function canBeginRound() {
         return false;
     }
 
+    // The initial lobby requires every connected player to opt in
+    // before the first round can begin.
     if (status === "before") {
         return readyPlayers.length === scores.length;
     }
 
+    // During later lobby transitions, spectators may remain Not Ready without
+    // blocking players who are already eligible for the next round.
     return scores.every((entry) => entry[3] === "Ready" || entry[3] === "Not Ready");
 }
 
@@ -532,9 +542,11 @@ async function beginRound(socket) {
         return;
     }
 
+    // Preserve the current roster and add only late joiners who explicitly
+    // readied themselves for the next round.
     const participants = status === "before"
         ? new Set(scores.filter((entry) => entry[3] === "Ready").map((entry) => entry[0]))
-        : new Set([...roundPlayers, ...readyForNextRound]
+        : new Set([...currentRoundPlayers, ...playersReadyForNextRound]
             .filter((id) => scores.some((entry) => entry[0] === id)));
     if (participants.size === 0) {
         return;
@@ -548,14 +560,15 @@ async function beginRound(socket) {
         }
 
         status = "during";
-        roundPlayers = participants;
-        readyForNextRound.clear();
+        currentRoundPlayers = participants;
+        playersReadyForNextRound.clear();
         guessCount = 0;
         processedAnswers = new Set();
         for (const player of scores) {
-            if (roundPlayers.has(player[0])) {
+            if (currentRoundPlayers.has(player[0])) {
                 player[3] = "Guessing...";
-                player[4] = "null";
+                // Do not expose a stale or meaningless guess value at round start.
+                player[4] = "-----";
             }
         }
         clearBonus();
@@ -581,9 +594,9 @@ function finishRound() {
     guessCount = 0;
     status = "after";
     for (const player of scores) {
-        if (roundPlayers.has(player[0])) {
+        if (currentRoundPlayers.has(player[0])) {
             player[3] = "Ready";
-        } else if (readyForNextRound.has(player[0])) {
+        } else if (playersReadyForNextRound.has(player[0])) {
             player[3] = "Ready";
         }
     }
@@ -612,8 +625,9 @@ function scheduleRoundTimeout() {
             return;
         }
         console.warn(`Round ${roundNumber} timed out. Marking unanswered players as timed out.`);
+        // Only unanswered participants are timed out; spectators are untouched.
         for (const player of scores) {
-            if (roundPlayers.has(player[0]) && player[3] !== "Guessed") {
+            if (currentRoundPlayers.has(player[0]) && player[3] !== "Guessed") {
                 player[3] = "Ready";
                 player[4] = "-----";
                 guessCount++;
@@ -630,8 +644,10 @@ function isValidAnswerSubmission(socket, name, expectedCorrect) {
     }
 
     const player = scores.find((entry) => entry[0] === socket.id);
+    // Include the round in the deduplication key so one answer is accepted per
+    // player per round, even if the client retries the request.
     const answerKey = `${socket.id}:${roundNumber}`;
-    if (!player || player[1] !== name || !roundPlayers.has(socket.id) ||
+    if (!player || player[1] !== name || !currentRoundPlayers.has(socket.id) ||
         processedAnswers.has(answerKey)) {
         console.error(`Rejected duplicate or unauthorized answer for ${name}.`);
         return false;
@@ -656,6 +672,7 @@ function shutdownForRedis() {
         return;
     }
     shuttingDownForRedis = true;
+    // Continuing without Redis would leave clients connected to invalid state.
     console.error("Redis is unavailable. Shutting down the game server.");
     clearTimeout(roundTimer);
     io.close();
@@ -720,6 +737,7 @@ function isValidRoundState() {
         return false;
     }
 
+    // A missing difficulty should not stop a round; use the documented default.
     if (parseDifficulty(difficulty[bufferIndex]) === null) {
         console.error(`Invalid difficulty for current dream ${bufferIndex}. Setting it to 5.`);
         difficulty[bufferIndex] = 5;
@@ -736,6 +754,8 @@ var dreamDifficulty = null;
 var buffer = [];
 async function updateRandomDream(type, socket, recipients = null){
     if (type === "new") {
+        // New dreams are sent only to selected participants. This prevents a
+        // mid-round joiner from entering the current round accidentally.
         roundNumber++;
         if (dreamCount < 1) {
             const dreamCountValue = await fetch("&dreamcount");
@@ -839,7 +859,7 @@ async function updateRandomDream(type, socket, recipients = null){
         }
 
         buffer.push(rng);
-        if (buffer.length > 700) {
+        if (buffer.length > (dreamCount / 2)) {
             buffer.shift();
         }
         await write("%buffer",buffer.join(","));
@@ -873,6 +893,7 @@ async function updateStats() {
 }
 
 async function normalizePlayerStats(name, value) {
+    // Normalize every Redis field before game logic can perform arithmetic on it.
     const rawStats = typeof value === "string" ? value.split(",") : [];
     const normalizedStats = [];
 
@@ -898,6 +919,7 @@ async function normalizePlayerStats(name, value) {
 }
 
 async function updatePFPs() {
+    // Profile pictures are loaded once at startup and cached for new clients.
     PFPs = await Promise.all(names.map(async (name) => {
         const value = await fetch("$" + name);
         const profilePicture = await getValidProfilePicture(value, name);
@@ -924,6 +946,8 @@ async function getValidProfilePicture(value, name) {
         return DEFAULT_PROFILE_PICTURE;
     }
 
+    // Validate remote avatars with a bounded request so an unavailable CDN
+    // cannot stall server initialization indefinitely.
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
     try {

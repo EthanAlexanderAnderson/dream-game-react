@@ -1,5 +1,5 @@
 import io from 'socket.io-client'
-import { useEffect, useState} from "react";
+import { useEffect, useRef, useState} from "react";
 import ButtonSection from './buttonSection';
 import PlayerSection from './playerSection';
 import ImageSection from './imageSection';
@@ -47,23 +47,25 @@ function App() {
   const [averageScore, setAverageScore] = useState(0);
   const [gnomeButtonStatus, setGnomeButtonStatus] = useState(false);
   const [roundNumber, setRoundNumber] = useState(0);
+  const [roundCountdown, setRoundCountdown] = useState(0);
+  const countdownTimer = useRef(null);
 
   // player come online
   const playerJoin = (name) => {
-    // connect to server
+    // Each selected player gets a socket connection before joining the lobby.
     socket = io.connect(URL);
-    // set name on user
     setName(name);
     setStatus("before");
-    // update player list on peers
     socket.emit("player_join", name);
   };
 
-  // mark player ready for the next round
+  // The server decides when readiness is sufficient to start a round.
   const ready = () => {
     socket.emit("ready");
   };
 
+  // Kept for the existing post-round client transition; the server still
+  // validates whether this socket may request a new dream.
   const start = () => {
     socket.emit("get_random_dream_u");
   };
@@ -114,6 +116,11 @@ function App() {
 
     setTextSection(data.dream);
     setResultSection("");
+    setRoundCountdown(0);
+    if (countdownTimer.current) {
+      clearInterval(countdownTimer.current);
+      countdownTimer.current = null;
+    }
     setImage(data.dream.split(" ").join("_").replace(/[ &?]/g, ""));
 
     //console.log("round number: "+ data.roundNumber + " difficulty: " + data.dreamDifficulty);
@@ -190,10 +197,10 @@ function App() {
       return;
     }
     if (answer === myGuess) {
-      setResultSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
+      setResultSection("CORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
       socket.emit("correct", name);
     } else {
-      setResultSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess + "\nNext round starts in 5 seconds...");
+      setResultSection("INCORRECT\nANSWER: " + answer + "\nYou guessed: " + myGuess);
       socket.emit("incorrect", name);
       if (answer === "Gnome") {
         gnomeJumpscare();
@@ -204,7 +211,22 @@ function App() {
     setImage("");
     myGuess = "";
     setDisabled([]);
-    setTimeout(start, 5000);
+    setRoundCountdown(5);
+    if (countdownTimer.current) {
+      clearInterval(countdownTimer.current);
+    }
+    let secondsRemaining = 5;
+    countdownTimer.current = setInterval(() => {
+      secondsRemaining--;
+      if (secondsRemaining <= 0) {
+        clearInterval(countdownTimer.current);
+        countdownTimer.current = null;
+        setRoundCountdown(0);
+        start();
+      } else {
+        setRoundCountdown(secondsRemaining);
+      }
+    }, 1000);
   }
 
   const updateScores = (data) => {
@@ -254,7 +276,7 @@ function App() {
     socket.on("update_stats", updateStats);
     socket.on("update_PFPs", updatePFPs);
     socket.on("toggle_gnome_button_status", toggleGnomeButtonStatus);
-    
+     
     return () => {
       socket.off("receive_message");
       socket.off("player_join_d");
@@ -267,6 +289,13 @@ function App() {
     };
 
   }, [allGuessed, updateScores]);
+
+  useEffect(() => () => {
+    if (countdownTimer.current) {
+      clearInterval(countdownTimer.current);
+      countdownTimer.current = null;
+    }
+  }, []);
 
   // display
   return (
@@ -281,7 +310,10 @@ function App() {
         <div id='textSection'>
           <div id="gnomeStatus"  style={{color: "red"}}>{gnome ? "Gnome mode is Active" : ""}</div>
           <div id='resultHeader' style={{color: status === "after" ? resultSection.startsWith("C") ? 'green' : 'red' : 'white', fontWeight: status === "after" ? 'bold' : 'normal'}}>{resultSection.split('\n')[0]}</div>
-          <div id='resultBody'>{resultSection.split('\n').slice(1).join('\n')}</div>
+          <div id='resultBody'>
+            {resultSection.split('\n').slice(1).join('\n')}
+            {status === "after" && roundCountdown > 0 ? `\nNext round starts in ${roundCountdown} second${roundCountdown === 1 ? "" : "s"}...` : ""}
+          </div>
           {textSection}
           {answer === "Gnome" && (status === "during" || status === "guessed")  ? (
           <>

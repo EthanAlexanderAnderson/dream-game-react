@@ -50,6 +50,7 @@ function PlayerSection(props) {
 
     let colThree = "";
     if (status === "before") {
+        // The lobby column communicates opt-in state instead of skill rating.
         colThree = "Status"
         playerSection.sort((a, b) => (a[3] === "Ready" ? -1 : 1) - (b[3] === "Ready" ? -1 : 1));
     } else if (status === "during") {
@@ -146,6 +147,7 @@ function PlayerSection(props) {
                                         {item[2]} {scoreDiff} {bonusArray}
                                     </td>
                                     <td key={item[1] + colThree}>
+                                        {/* Only lobby readiness is color-coded; round statuses retain their meaning. */}
                                         <span className={status === "before" ? (itemThree === "Ready" ? "readyStatus" : (itemThree === "Not Ready" ? "notReadyStatus" : "")) : ""}>
                                             {itemThree}
                                         </span>

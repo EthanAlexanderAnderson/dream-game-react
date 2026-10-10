@@ -1,6 +1,7 @@
 import React from "react";
 
 function ButtonSection({ name, setStatus, playerJoin, status, ready, guess, disabled, toggleGnome, gnomeButtonStatus }) {
+    // These names correspond to the fixed player records loaded by the server.
     let profileNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
     let guessNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
     let classes = []
@@ -43,6 +44,7 @@ function ButtonSection({ name, setStatus, playerJoin, status, ready, guess, disa
     else if (status === "before") {
         return(
             <div id="controlButtons">
+                {/* Readiness is sent to the server; it starts the round when eligible. */}
                 <button className="btn btn-light" onClick={() => ready()}>Ready</button>
                 <br></br>
                 <button className={gnomeButtonStatus ? 'btn gnome toggled' : 'btn gnome'} onClick={() => toggleGnome()}><img id="toggleGnome" src="gnome_256.png" alt="toggle gnome mode"></img></button>
