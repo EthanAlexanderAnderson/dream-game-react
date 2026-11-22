@@ -89,8 +89,10 @@ function PlayerSection(props) {
                                     itemThree = item[4];
                                     // set score and bonus info
                                     // score diff
-                                    scoreDiff = ((item[2] - item[6]) > 0) ? <span className="scoreDiffPos">+{item[2] - item[6]}</span> : ((item[2] - item[6]) < 0) ? <span className="scoreDiffNeg">{item[2] - item[6]}</span> : null
-                                    bonusArray = item[7].map((bonus, index) => <div key={bonus[0]+item[1]} className="bonus">{bonus[0]} +{bonus[1]}</div>)
+                                    if (item[3] !== "Not Ready" && item[4] !== "-----") {
+                                        scoreDiff = ((item[2] - item[6]) > 0) ? <span className="scoreDiffPos">+{item[2] - item[6]}</span> : ((item[2] - item[6]) < 0) ? <span className="scoreDiffNeg">{item[2] - item[6]}</span> : null
+                                        bonusArray = item[7].map((bonus, index) => <div key={bonus[0]+item[1]} className="bonus">{bonus[0]} +{bonus[1]}</div>)
+                                    }
                                 } else if (status === "before") {
                                     itemThree = item[3];
                                 }
@@ -147,8 +149,15 @@ function PlayerSection(props) {
                                         {item[2]} {scoreDiff} {bonusArray}
                                     </td>
                                     <td key={item[1] + colThree}>
-                                        {/* Only lobby readiness is color-coded; round statuses retain their meaning. */}
-                                        <span className={status === "before" ? (itemThree === "Ready" ? "readyStatus" : (itemThree === "Not Ready" ? "notReadyStatus" : "")) : ""}>
+                                                <span className={
+                                                    itemThree === "Ready" ? "readyStatus"
+                                                        : itemThree === "Not Ready" ? "notReadyStatus"
+                                                            : itemThree === "Guessing..." ? "guessingStatus"
+                                                                : itemThree === "Guessed" ? "guessedStatus"
+                                                                    : status === "after"
+                                                                        ? (item[9] === "Correct" ? "correctStatus" : (item[9] === "Incorrect" ? "incorrectStatus" : ""))
+                                                                        : ""
+                                                }>
                                             {itemThree}
                                         </span>
                                     </td>

@@ -26,6 +26,17 @@ function MessageSection(props) {
         return (
             <div id="messageSection">
                 <div className="roundCount">Round: {props.roundNumber}</div>
+                {(props.status === "during" || props.status === "guessed" || props.status === "after") && (
+                    <button
+                        type="button"
+                        className="leaveLobbyButton"
+                        onClick={props.leaveLobby}
+                        title="Leave to lobby"
+                        aria-label="Leave to lobby"
+                    >
+                        <img src="/leave.svg" alt="" />
+                    </button>
+                )}
                 <div id="messageBox" className="message" ref={messageBoxRef}>
                     <ul>
                     {messages.map((item, index) => (

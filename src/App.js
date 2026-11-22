@@ -15,7 +15,7 @@ const URL = IS_PROD ? window.location.origin : "http://localhost:3001";
 var myGuess = "";
 var answer = "";
 var gnome = false;
-let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
+let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Abi", "Guest"]
 // these three variables are used to calculate the timer intervals
 let position = 0;
 let difficulty = 0;
@@ -65,6 +65,24 @@ function App() {
     socket.emit("ready");
   };
 
+  const leaveLobby = () => {
+    socket.emit("leave_lobby");
+    setStatus("before");
+    setTextSection("");
+    setResultSection("");
+    setImage("");
+    setDisabled([]);
+  };
+
+  const stopActiveGame = () => {
+    setStatus("before");
+    setTextSection("");
+    setResultSection("");
+    setRoundCountdown(0);
+    setImage("");
+    setDisabled([]);
+  };
+
   // Kept for the existing post-round client transition; the server still
   // validates whether this socket may request a new dream.
   const start = () => {
@@ -76,6 +94,10 @@ function App() {
 
   const saveGameSettings = (nextSettings) => {
     socket.emit("save_game_settings", nextSettings);
+  };
+
+  const clearDreamBuffer = () => {
+    socket.emit("clear_dream_buffer");
   };
 
   const canEditGameSettings = gameSettings?.editable === true &&
@@ -250,12 +272,14 @@ function App() {
   }
 
   const disableRandomButton = () => {
-    let randomNumber = Math.floor(Math.random() * 13);
+    const guessNames = names.filter((playerName) => playerName !== "Guest");
+    let randomName = guessNames[Math.floor(Math.random() * guessNames.length)];
     let attemps = 0;
-    while ((names[randomNumber] === answer || disabled.includes(randomNumber)) && attemps < 1000) {
-      randomNumber = Math.floor(Math.random() * 13);
+    while ((randomName === answer || disabled.includes(names.indexOf(randomName))) && attemps < 1000) {
+      randomName = guessNames[Math.floor(Math.random() * guessNames.length)];
       attemps++;
     }
+    const randomNumber = names.indexOf(randomName);
     setDisabled(prevArray => [...prevArray, randomNumber]);
     setDisabled(prevArray => [...prevArray].sort((a, b) => a - b));
   }
@@ -282,6 +306,7 @@ function App() {
     socket.on("update_stats", updateStats);
     socket.on("update_PFPs", updatePFPs);
     socket.on("update_game_settings", updateGameSettingsFromServer);
+    socket.on("game_stopped", stopActiveGame);
      
     return () => {
       socket.off("receive_message");
@@ -292,6 +317,7 @@ function App() {
       socket.off("update_stats");
       socket.off("update_PFPs");
       socket.off("update_game_settings");
+      socket.off("game_stopped");
     };
 
   }, [allGuessed, updateScores]);
@@ -332,7 +358,7 @@ function App() {
           <div id='difficultyText' title={difficulty}>{status === "during" ? "Difficulty: " + difficultyString : ""}</div>
         </div>
 
-        <ButtonSection name={name} playerJoin={playerJoin} status={status} ready={ready} guess={guess} disabled={disabled} settings={gameSettings} settingsOpen={settingsOpen} toggleSettings={() => setSettingsOpen((open) => !open)} canEditSettings={canEditGameSettings} saveSettings={saveGameSettings}/>
+        <ButtonSection name={name} playerJoin={playerJoin} status={status} ready={ready} guess={guess} disabled={disabled} settings={gameSettings} settingsOpen={settingsOpen} toggleSettings={() => setSettingsOpen((open) => !open)} canEditSettings={canEditGameSettings} saveSettings={saveGameSettings} clearDreamBuffer={clearDreamBuffer}/>
 
         <Timer trigger={timerTrigger} guess={guess} myGuess={myGuess} status={status} disableRandomButton={disableRandomButton} position={position} difficulty={difficulty} rank={rank} score={score} averageScore={averageScore} tick={tick} hintsEnabled={gameSettings?.hintsEnabled} maxHints={gameSettings?.maxHints}/>
 
@@ -344,7 +370,7 @@ function App() {
 
       {name !== "" ? ( // only render this section after name is set
         <div className='order-1'  style={{ padding: "0px" }}>
-          <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages} roundNumber={roundNumber}/>
+          <MessageSection name={name} setMessage={setMessage} sendMessage={sendMessage} message={message} messages={messages} roundNumber={roundNumber} status={status} leaveLobby={leaveLobby}/>
 
           <RankSection stats={stats} PFPs={PFPs}/>
         </div>

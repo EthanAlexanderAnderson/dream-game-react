@@ -41,9 +41,9 @@ const io = new Server(server, {
 });
 
 // dreamgame variables
-let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
+let names = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Abi", "Guest"]
 const guessableNames = names.filter((name) => name !== "Guest");
-const bonusTypes = ["underdog", "streak", "bottomFeeder", "earlyBird", "irony", "loneWolf", "nonConformist", "mixedBag"];
+const bonusTypes = ["underdog", "streak", "biggestLoser", "bottomFeeder", "earlyBird", "irony", "loneWolf", "nonConformist", "mixedBag"];
 const defaultGameSettings = {
     sort: "random",
     numberRange: [0, Number.MAX_SAFE_INTEGER],
@@ -85,6 +85,7 @@ let currentRoundPlayers = new Set();
 let playersReadyForNextRound = new Set();
 let shuttingDownForRedis = false;
 let dreamCatalog = [];
+let activeDreamers = [];
 
 client.on("error", (error) => {
     console.error(`Redis connection error: ${error.message}`);
@@ -131,6 +132,9 @@ io.on("connection", (socket) => {
         scores = scores.filter(subArr => !subArr.includes(socket.id));
         currentRoundPlayers.delete(socket.id);
         playersReadyForNextRound.delete(socket.id);
+        if (status !== "before" && currentRoundPlayers.size === 0) {
+            stopActiveGame();
+        }
         if (status === "during" && playerCount > 0 &&
             [...currentRoundPlayers].every((id) => {
                 const player = scores.find((entry) => entry[0] === id);
@@ -162,7 +166,7 @@ io.on("connection", (socket) => {
             playerCount++;
             joined = true;
             // scores variable items: id, name, score, ready, guess, skillrating, scorePrev, bonus Array
-            scores.push([socket.id, name, 0, "Not Ready", "-----", 0, 0, []]);
+            scores.push([socket.id, name, 0, "Not Ready", "-----", 0, 0, [], 0, ""]);
             for (let s of stats) {
                 if (s[0] === name) {
                     s.push(socket.id);
@@ -200,6 +204,34 @@ io.on("connection", (socket) => {
         }
     }));
 
+    socket.on("leave_lobby", () => {
+        const player = scores.find((entry) => entry[0] === socket.id);
+        if (!player) {
+            return;
+        }
+
+        player[3] = "Not Ready";
+        player[4] = "-----";
+        player[6] = player[2];
+        player[7] = [];
+        player[9] = "";
+        currentRoundPlayers.delete(socket.id);
+        playersReadyForNextRound.delete(socket.id);
+
+        if (status !== "before" && currentRoundPlayers.size === 0) {
+            stopActiveGame();
+        } else if (status === "during" && currentRoundPlayers.size > 0 &&
+            [...currentRoundPlayers].every((id) => {
+                const roundPlayer = scores.find((entry) => entry[0] === id);
+                return roundPlayer && roundPlayer[3] === "Guessed";
+            })) {
+            finishRound();
+        }
+
+        io.emit("update_scores", scores);
+        emitServerMessage(`${player[1]} returned to the lobby.`);
+    });
+
     // After new player selects their name
     socket.on("get_random_dream_u", safeAsyncHandler("get_random_dream_u", async () => {
         if (!scores.some((entry) => entry[0] === socket.id)) {
@@ -228,6 +260,17 @@ io.on("connection", (socket) => {
             console.error(`Rejected invalid guess from ${player[1]}`);
             return;
         }
+        if (guess === "-----") {
+            scores = scores.map(subArr => subArr.map((el, i) =>
+                i === 6 && subArr[0] === socket.id ? subArr[2] : el));
+            setReady(socket, "Guessed");
+            setGuess(socket, "-----");
+            io.emit("update_scores", scores);
+            if (allCurrentPlayersGuessed()) {
+                finishRound();
+            }
+            return;
+        }
         if (guess !== "Gnome" && !gameSettings.allowedDreamers.includes(guess)) {
             console.error(`Rejected disabled dreamer guess from ${player[1]}: ${guess}`);
             return;
@@ -245,7 +288,7 @@ io.on("connection", (socket) => {
         if (guess === "Gnome" && gameSettings.gnomeEnabled && gnomeChance >= 1 && gnomeChance <= gameSettings.gnomeFrequency) {
             dreamer = "Gnome";
         }
-        if (guessCount === currentRoundPlayers.size){
+        if (allCurrentPlayersGuessed()) {
             finishRound();
         }
     });
@@ -329,7 +372,8 @@ io.on("connection", (socket) => {
 
         // BONUSES
         // underdog bonus 
-        let underdogData = scores.sort((a, b) => b[2] - a[2]);
+        const activeRoundScores = scores.filter((entry) => currentRoundPlayers.has(entry[0]));
+        let underdogData = [...activeRoundScores].sort((a, b) => b[2] - a[2]);
         let underdogCount = 0;
         for (let i = 0; i < underdogData.length; i++) {
             if ( underdogData[i][4] !== dreamer ) {
@@ -338,7 +382,7 @@ io.on("connection", (socket) => {
                 break;
             }
         }
-        if (gameSettings.bonusPoints && gameSettings.bonuses.underdog && underdogCount > 0 && playerCount > 2) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.underdog && underdogCount > 0 && activeRoundScores.length > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + underdogCount) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Underdog x"+underdogCount, underdogCount]]) : el));
         }
@@ -355,12 +399,12 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Streak x"+scores[scoreindex][5], (Math.floor(parseInt(scores[scoreindex][5])/5))]]) : el));
         }
         // bottom feeder bonus
-        if (gameSettings.bonusPoints && gameSettings.bonuses.bottomFeeder && name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
+        if (gameSettings.bonusPoints && gameSettings.bonuses.bottomFeeder && name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && activeRoundScores.length > 1){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
         // early bird bonus
-        if (gameSettings.bonusPoints && gameSettings.bonuses.earlyBird && name === earlyBird && playerCount > 2) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.earlyBird && name === earlyBird && activeRoundScores.length > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Early Bird", 1]]) : el));
         }
@@ -368,31 +412,34 @@ io.on("connection", (socket) => {
         // theres a bug here whhen the dreamer moves in the leaderboard before this point, irony is assigned not properly
         // we just need to reassign dreamerindex to the new position of the dreamer
         [statindex, scoreindex, dreamerindex] = setIndexes(name);
-        if (gameSettings.bonusPoints && gameSettings.bonuses.irony && scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][4] !== dreamer) {
+        const dreamerIsActive = activeRoundScores.some((entry) => entry[1] === dreamer);
+        if (gameSettings.bonusPoints && gameSettings.bonuses.irony && dreamerIsActive && scores[scoreindex][5] >= 1 && dreamerindex != -1 && scores[dreamerindex][4] !== dreamer) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Irony", 1]]) : el));
         }
         // lone wolf bonus
-        if (gameSettings.bonusPoints && gameSettings.bonuses.loneWolf && scores.every(subArr => subArr[4] !== dreamer || subArr[0] === socket.id) && playerCount > 2) {
+        if (gameSettings.bonusPoints && gameSettings.bonuses.loneWolf && activeRoundScores.every(subArr => subArr[4] !== dreamer || subArr[0] === socket.id) && activeRoundScores.length > 2) {
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Lone Wolf", 1]]) : el));
         // Non-conformist & Mixed Bag bonus
-            if (playerCount > 3){
+            if (activeRoundScores.length > 3){
                 let unique = [];
-                for (let i = 0; i < scores.length; i++) {
-                    if (!unique.includes(scores[i][4])) {
-                        unique.push(scores[i][4]);
+                for (let i = 0; i < activeRoundScores.length; i++) {
+                    if (!unique.includes(activeRoundScores[i][4])) {
+                        unique.push(activeRoundScores[i][4]);
                     }
                 }
                 // Non-conformist bonus
                 if (gameSettings.bonuses.nonConformist && unique.length == 2) {
-                    scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (playerCount-3)) : el));
-                    scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Non-conformist", (playerCount-3)]]) : el));
+                    const bonus = activeRoundScores.length - 3;
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + bonus) : el));
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Non-conformist", bonus]]) : el));
                 } 
                 // Mixed Bag bonus
-                else if (gameSettings.bonuses.mixedBag && unique.length == playerCount) {
-                    scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (playerCount-3)) : el));
-                    scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Mixed Bag", (playerCount-3)]]) : el));
+                else if (gameSettings.bonuses.mixedBag && unique.length == activeRoundScores.length) {
+                    const bonus = activeRoundScores.length - 3;
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + bonus) : el));
+                    scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Mixed Bag", bonus]]) : el));
                 }
             }
         }
@@ -478,7 +525,7 @@ io.on("connection", (socket) => {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
         } else {
             scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? (parseInt(el) - 1) : el)); // streak
-            if (scoreindex >= 0 && scoreindex < scores.length && scores[scoreindex][5] <= -5) {
+            if (gameSettings.bonusPoints && gameSettings.bonuses.biggestLoser && scoreindex >= 0 && scoreindex < scores.length && scores[scoreindex][5] <= -5) {
         // biggest loser bonus
                 scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + 1) : el));
                 scores = scores.map(subArr => subArr.map((el, i) => i === 5 && subArr[0] === socket.id ? 0 : el)); // reset streak to 0
@@ -486,7 +533,7 @@ io.on("connection", (socket) => {
             }
         }
         // bottom feeder bonus
-        if (gameSettings.bonusPoints && gameSettings.bonuses.bottomFeeder && name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && playerCount > 1){
+        if (gameSettings.bonusPoints && gameSettings.bonuses.bottomFeeder && name === bottomFeeder.name && (bottomFeeder.streak % 5 == 0) && currentRoundPlayers.has(socket.id)){
             scores = scores.map(subArr => subArr.map((el, i) => i === 2 && subArr[0] === socket.id ? (parseInt(el) + (Math.floor(parseInt(bottomFeeder.streak)/5))) : el));
             scores = scores.map(subArr => subArr.map((el, i) => i === 7 && subArr[0] === socket.id ? el.concat([["Bottom Feeder", (Math.floor(parseInt(bottomFeeder.streak)/5))]]) : el));
         }
@@ -531,6 +578,16 @@ io.on("connection", (socket) => {
         io.emit("update_game_settings", getPublicGameSettings());
         emitServerMessage(`${player[1]} changed the game settings.`);
     }));
+
+    socket.on("clear_dream_buffer", safeAsyncHandler("clear_dream_buffer", async () => {
+        const player = scores.find((entry) => entry[0] === socket.id);
+        if (!player || status !== "before" || player[3] === "Ready") {
+            return;
+        }
+        buffer = [];
+        await write("%buffer", "");
+        emitServerMessage(`${player[1]} cleared the dream buffer.`);
+    }));
 });
 
 function cloneGameSettings() {
@@ -548,6 +605,7 @@ function getDefaultGameSettings() {
     const settings = cloneGameSettings();
     settings.numberRange = [0, Math.max(0, dreamCount - 1)];
     settings.lengthRange = [0, dreamCatalog.reduce((maximum, entry) => Math.max(maximum, entry.text.length), 0)];
+    settings.allowedDreamers = [...activeDreamers];
     return settings;
 }
 
@@ -564,7 +622,7 @@ function getPublicGameSettings() {
             dreamCount,
             maxDreamLength: dreamCatalog.reduce((maximum, entry) => Math.max(maximum, entry.text.length), 0),
             difficulty: [-5, 15],
-            names: [...guessableNames]
+            names: [...activeDreamers]
         }
     };
 }
@@ -593,10 +651,10 @@ function normalizeGameSettings(requested) {
     const maxLength = dreamCatalog.reduce((maximum, entry) => Math.max(maximum, entry.text.length), 0);
     normalized.lengthRange = normalizeRange(requested.lengthRange, 0, maxLength);
     if (Array.isArray(requested.allowedDreamers)) {
-        normalized.allowedDreamers = guessableNames.filter((name) => requested.allowedDreamers.includes(name));
+        normalized.allowedDreamers = activeDreamers.filter((name) => requested.allowedDreamers.includes(name));
     }
     if (normalized.allowedDreamers.length === 0) {
-        normalized.allowedDreamers = [...guessableNames];
+        normalized.allowedDreamers = [...activeDreamers];
     }
     normalized.bonusPoints = requested.bonusPoints !== false;
     if (requested.bonuses && typeof requested.bonuses === "object") {
@@ -708,6 +766,8 @@ async function beginRound(socket) {
                 player[3] = "Guessing...";
                 // Do not expose a stale or meaningless guess value at round start.
                 player[4] = "-----";
+                player[6] = player[2];
+                player[9] = "";
             }
         }
         clearBonus();
@@ -717,6 +777,28 @@ async function beginRound(socket) {
     } finally {
         startingRound = false;
     }
+}
+
+function stopActiveGame() {
+    clearTimeout(roundTimer);
+    roundTimer = null;
+    startingRound = false;
+    status = "before";
+    roundNumber = 0;
+    guessCount = 0;
+    gnomeChance = -1;
+    processedAnswers = new Set();
+    currentRoundPlayers = new Set();
+    playersReadyForNextRound = new Set();
+
+    for (const player of scores) {
+        player[3] = "Not Ready";
+        player[4] = "-----";
+    }
+
+    io.emit("update_scores", scores);
+    io.emit("update_game_settings", getPublicGameSettings());
+    io.emit("game_stopped");
 }
 
 function finishRound() {
@@ -733,14 +815,16 @@ function finishRound() {
     for (const player of scores) {
         if (currentRoundPlayers.has(player[0])) {
             player[3] = "Ready";
+            player[9] = player[4] === dreamer ? "Correct" : "Incorrect";
         } else if (playersReadyForNextRound.has(player[0])) {
             player[3] = "Ready";
         }
     }
     io.emit("update_scores", scores);
 
-    if (playerCount > 1 && scores.length > 0) {
-        const orderedScores = [...scores].sort((a, b) => a[2] - b[2]);
+    const activeRoundScores = scores.filter((entry) => currentRoundPlayers.has(entry[0]));
+    if (activeRoundScores.length > 1) {
+        const orderedScores = [...activeRoundScores].sort((a, b) => a[2] - b[2]);
         const minSubarray = orderedScores[0];
         const nextMinSubarray = orderedScores.find((entry) => entry[2] > minSubarray[2]);
         if (nextMinSubarray &&
@@ -756,7 +840,8 @@ function finishRound() {
 
 function scheduleRoundTimeout() {
     clearTimeout(roundTimer);
-    const roundSeconds = 10 + Math.floor((typeof dream === "string" ? dream.length : 0) / 15) + 5;
+    const dreamLength = typeof dream === "string" ? dream.length : 0;
+    const roundSeconds = 10 + Math.floor(dreamLength / 15) + 1;
     roundTimer = setTimeout(() => {
         if (status !== "during") {
             return;
@@ -765,13 +850,23 @@ function scheduleRoundTimeout() {
         // Only unanswered participants are timed out; spectators are untouched.
         for (const player of scores) {
             if (currentRoundPlayers.has(player[0]) && player[3] !== "Guessed") {
-                player[3] = "Ready";
+                player[3] = "Guessed";
                 player[4] = "-----";
-                guessCount++;
+                player[6] = player[2];
             }
         }
         finishRound();
     }, roundSeconds * 1000);
+}
+
+function allCurrentPlayersGuessed() {
+    if (status !== "during" || currentRoundPlayers.size === 0) {
+        return false;
+    }
+    return [...currentRoundPlayers].every((socketId) => {
+        const player = scores.find((entry) => entry[0] === socketId);
+        return player && player[3] === "Guessed";
+    });
 }
 
 function isValidAnswerSubmission(socket, name, expectedCorrect) {
@@ -1095,6 +1190,18 @@ async function loadDreamCatalog() {
             difficulty: parseDifficulty(String(difficulty[index])) ?? 5
         });
     }
+    const dreamerCounts = new Map();
+    for (const dream of dreamCatalog) {
+        dreamerCounts.set(dream.dreamer, (dreamerCounts.get(dream.dreamer) || 0) + 1);
+    }
+    activeDreamers = guessableNames.filter((name) => (dreamerCounts.get(name) || 0) > 0);
+    if (gameSettings) {
+        gameSettings.allowedDreamers = gameSettings.allowedDreamers
+            .filter((name) => activeDreamers.includes(name));
+        if (gameSettings.allowedDreamers.length === 0) {
+            gameSettings.allowedDreamers = [...activeDreamers];
+        }
+    }
 }
 
 async function loadBuffer() {
@@ -1220,6 +1327,9 @@ async function initialize() {
     await updateStats();
     await loadBuffer();
     await loadDreamCatalog();
+    if (activeDreamers.length === 0) {
+        throw new Error("No dreamers have any valid dreams.");
+    }
     gameSettings = getDefaultGameSettings();
     await updatePFPs();
 

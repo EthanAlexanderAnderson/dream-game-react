@@ -562,6 +562,24 @@ body {
     box-shadow: 0 0 0 3px rgba(81, 223, 172, 0.16), 0 0 22px rgba(81, 223, 172, 0.35);
 }
 
+.clearDreamBufferButton {
+    width: 100%;
+    margin-top: 12px;
+    border: 1px solid rgba(255, 113, 136, 0.35);
+    background: rgba(255, 113, 136, 0.1);
+    color: var(--danger);
+}
+
+.clearDreamBufferButton:hover,
+.clearDreamBufferButton:focus-visible {
+    border-color: rgba(255, 113, 136, 0.7);
+    background: rgba(255, 113, 136, 0.16);
+}
+
+.clearDreamBufferButton:disabled {
+    opacity: 0.45;
+}
+
 .settingsMenu {
     position: absolute;
     z-index: 20;
@@ -627,6 +645,53 @@ body {
     gap: 8px;
     color: var(--ink);
     font-size: 0.78rem;
+}
+
+.bonusSetting {
+    position: relative;
+}
+
+.bonusTooltipIcon {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    margin-left: 2px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--muted);
+    font-size: 0.68rem;
+    cursor: help;
+}
+
+.bonusTooltipIcon::after {
+    position: absolute;
+    z-index: 30;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    width: 220px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #111827;
+    box-shadow: var(--shadow);
+    color: var(--ink);
+    content: attr(data-tooltip);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.35;
+    opacity: 0;
+    pointer-events: none;
+    text-align: left;
+    transform: translate(-50%, 4px);
+    transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.bonusTooltipIcon:hover::after,
+.bonusTooltipIcon:focus-visible::after {
+    opacity: 1;
+    transform: translate(-50%, 0);
 }
 
 .settingsRange {
@@ -801,6 +866,43 @@ body {
     color: var(--danger);
 }
 
+.guessingStatus,
+.guessedStatus,
+.correctStatus,
+.incorrectStatus {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.guessingStatus {
+    border: 1px solid rgba(255, 211, 105, 0.35);
+    background: rgba(255, 211, 105, 0.12);
+    color: #ffd369;
+}
+
+.guessedStatus {
+    border: 1px solid rgba(255, 166, 77, 0.35);
+    background: rgba(255, 166, 77, 0.12);
+    color: #ffa64d;
+}
+
+.correctStatus {
+    border: 1px solid rgba(81, 223, 172, 0.25);
+    background: rgba(81, 223, 172, 0.12);
+    color: var(--success);
+}
+
+.incorrectStatus {
+    border: 1px solid rgba(255, 113, 136, 0.25);
+    background: rgba(255, 113, 136, 0.1);
+    color: var(--danger);
+}
+
 #imageSection {
     min-height: 0;
     padding: 10px;
@@ -832,6 +934,39 @@ body {
     font-size: clamp(1rem, 1.4vw, 1.35rem);
     font-weight: 800;
     letter-spacing: -0.02em;
+}
+
+#messageSection {
+    position: relative;
+}
+
+.leaveLobbyButton {
+    position: absolute;
+    top: clamp(12px, 1.5vw, 18px);
+    right: clamp(12px, 1.5vw, 18px);
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface-strong);
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.leaveLobbyButton:hover,
+.leaveLobbyButton:focus-visible {
+    border-color: var(--accent);
+    background: rgba(124, 140, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.leaveLobbyButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 #messageBox {
@@ -987,6 +1122,10 @@ body {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .welcome-state {
+        grid-template-columns: none;
+    }
+
     .App > .order-3 {
         grid-column: 1 / -1;
         display: grid;
@@ -1124,7 +1263,11 @@ body {
     }
 
     #playerSection .readyStatus,
-    #playerSection .notReadyStatus {
+    #playerSection .notReadyStatus,
+    #playerSection .guessingStatus,
+    #playerSection .guessedStatus,
+    #playerSection .correctStatus,
+    #playerSection .incorrectStatus {
         padding: 3px 4px;
         font-size: 0.55rem;
         letter-spacing: 0;

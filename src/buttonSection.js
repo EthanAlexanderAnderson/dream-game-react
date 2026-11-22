@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import GameSettings from "./gameSettings";
 
-function ButtonSection({ name, playerJoin, status, ready, guess, disabled, settings, settingsOpen, toggleSettings, canEditSettings, saveSettings }) {
+function ButtonSection({ name, playerJoin, status, ready, guess, disabled, settings, settingsOpen, toggleSettings, canEditSettings, saveSettings, clearDreamBuffer }) {
     const [settingsDirty, setSettingsDirty] = useState(false);
     // These names correspond to the fixed player records loaded by the server.
-    let profileNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Guest"]
-    let guessNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach"]
+    let profileNames = ["Ethan", "Cole", "Nathan", "Oobie", "Devon", "Mitch", "Max", "Adam", "Eric", "Dylan", "Jack", "Devo", "Zach", "Ailís", "Abi", "Guest"]
+    let guessNames = settings?.limits?.names || [];
     const enabledGuessNames = settings?.allowedDreamers
         ? guessNames.filter((guessName) => settings.allowedDreamers.includes(guessName))
         : guessNames;
@@ -36,32 +36,32 @@ function ButtonSection({ name, playerJoin, status, ready, guess, disabled, setti
             <>
                 <div id="guessButtons">
                     {enabledGuessNames.map((item) => {
-                        const index = guessNames.indexOf(item);
+                        const index = profileNames.indexOf(item);
                         return (
                         <button key={item} className={classes[index]} onClick={() => guess(item)}>{item}</button>
                         );
                     })}
                 </div>
-                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />
+                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} onClear={clearDreamBuffer} />
             </>
         );
     }  else if (status === "guessed") {
         return(
             <div>
                 <p>Waiting for others to guess...</p>
-                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />
+                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} onClear={clearDreamBuffer} />
             </div>
         );
     }
     else if (status === "after") {
-        return <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />;
+        return <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} onClear={clearDreamBuffer} />;
     }
     else if (status === "before") {
         return(
             <div id="controlButtons">
                 {/* Readiness is sent to the server; it starts the round when eligible. */}
                 <button className="btn btn-light" onClick={() => ready()} disabled={settingsDirty}>Ready</button>
-                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} />
+                <GameSettings settings={settings} open={settingsOpen} canEdit={canEditSettings} onDirtyChange={setSettingsDirty} onToggle={toggleSettings} onSave={saveSettings} onClear={clearDreamBuffer} />
             </div>
         );
     } 

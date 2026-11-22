@@ -13,12 +13,25 @@ const sortOptions = [
 const bonusLabels = {
     underdog: "Underdog",
     streak: "Streak",
+    biggestLoser: "Biggest Loser",
     bottomFeeder: "Bottom Feeder",
     earlyBird: "Early Bird",
     irony: "Irony",
     loneWolf: "Lone Wolf",
     nonConformist: "Non-conformist",
     mixedBag: "Mixed Bag"
+};
+
+const bonusDescriptions = {
+    underdog: "Awards extra points based on how many players above you have guessed the dream incorrectly (3+ players).",
+    streak: "Awards extra points for every five consecutive correct guesses.",
+    biggestLoser: "Awards one point after reaching five consecutive incorrect guesses.",
+    bottomFeeder: "Awards points to a player who remains at the bottom of the leaderboard (2+ players).",
+    earlyBird: "Awards one point to the first player who submits a correct guess (3+ players).",
+    irony: "Awards one point for correctly guessing a dream from a dreamer who was incorrect (2+ players).",
+    loneWolf: "Awards one point when you are the only player to guess correctly (3+ players).",
+    nonConformist: "Awards one point when every other player guessed the same incorrect dreamer (3+ players).",
+    mixedBag: "Awards one point when each other player guessed a different incorrect dreamer (3+ players)."
 };
 
 function RangeFilter({ label, range, minimum, maximum, step = 1, onChange }) {
@@ -48,7 +61,7 @@ function RangeFilter({ label, range, minimum, maximum, step = 1, onChange }) {
     );
 }
 
-function GameSettings({ settings, open, onToggle, canEdit, onDirtyChange, onSave }) {
+function GameSettings({ settings, open, onToggle, canEdit, onDirtyChange, onSave, onClear }) {
     const [draft, setDraft] = useState(settings);
     const [dirty, setDirty] = useState(false);
 
@@ -131,9 +144,10 @@ function GameSettings({ settings, open, onToggle, canEdit, onDirtyChange, onSave
                             <details className="settingsSubOptions">
                                 <summary>Bonus types</summary>
                                 {Object.entries(bonusLabels).map(([key, label]) => (
-                                    <label key={key} className="settingsCheck">
+                                    <label key={key} className="settingsCheck bonusSetting">
                                         <input type="checkbox" checked={draft.bonuses[key]} onChange={(event) => update({ bonuses: { ...draft.bonuses, [key]: event.target.checked } })} />
                                         {label}
+                                        <span className="bonusTooltipIcon" tabIndex="0" aria-label={bonusDescriptions[key]} data-tooltip={bonusDescriptions[key]}>?</span>
                                     </label>
                                 ))}
                             </details>
@@ -159,6 +173,14 @@ function GameSettings({ settings, open, onToggle, canEdit, onDirtyChange, onSave
                             </label>
                         )}
                     </fieldset>
+                    <button
+                        type="button"
+                        className="btn clearDreamBufferButton"
+                        disabled={!editable}
+                        onClick={onClear}
+                    >
+                        Clear Dream Buffer
+                    </button>
                 </div>
             )}
         </div>
