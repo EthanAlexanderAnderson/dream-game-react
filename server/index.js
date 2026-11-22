@@ -29,11 +29,13 @@ server.on("error", (error) => {
     process.exit(1);
 });
 app.use(express.static(path.join(__dirname, '../build')));
-app.get('/', (req, res, next) => res.sendFile(__dirname + './index.html'));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+});
 
 const io = new Server(server, {
     cors: {
-      origin: ["http://localhost:3000", "https://dreamgame.herokuapp.com/", "http://www.ethananderson.ca/", "https://dreamgame.ethananderson.ca/"], // FOR PROD
+      origin: ["http://localhost:3000", "https://dreamgame.ethananderson.ca"],
       methods: ["GET", "POST"],
     },
 });
@@ -1028,14 +1030,14 @@ async function updatePFPs() {
     io.emit("update_PFPs", PFPs);
 }
 
-async function getValidProfilePicture(value, name) {
+function getValidProfilePicture(value, name) {
     if (typeof value !== "string" || value.trim() === "") {
         return DEFAULT_PROFILE_PICTURE;
     }
 
     let url;
     try {
-        url = new URL(value);
+        url = new URL(value.trim());
     } catch (error) {
         console.error(`Invalid profile picture URL for ${name}: ${value}`);
         return DEFAULT_PROFILE_PICTURE;
@@ -1046,39 +1048,7 @@ async function getValidProfilePicture(value, name) {
         return DEFAULT_PROFILE_PICTURE;
     }
 
-    // Validate remote avatars with a bounded request so an unavailable CDN
-    // cannot stall server initialization indefinitely.
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    try {
-        let response = await globalThis.fetch(url, {
-            method: "HEAD",
-            redirect: "follow",
-            signal: controller.signal
-        });
-
-        // Some image hosts do not implement HEAD, so request only one byte.
-        if (response.status === 405) {
-            response = await globalThis.fetch(url, {
-                headers: { Range: "bytes=0-0" },
-                redirect: "follow",
-                signal: controller.signal
-            });
-        }
-
-        const contentType = response.headers.get("content-type") || "";
-        if (!response.ok || !contentType.toLowerCase().startsWith("image/")) {
-            console.error(`Profile picture unavailable for ${name}: ${value} (${response.status}, ${contentType || "unknown content type"})`);
-            return DEFAULT_PROFILE_PICTURE;
-        }
-
-        return value;
-    } catch (error) {
-        console.error(`Profile picture check failed for ${name}: ${value} (${error.message})`);
-        return DEFAULT_PROFILE_PICTURE;
-    } finally {
-        clearTimeout(timeout);
-    }
+    return url.href;
 }
 
 async function loadDifficulty() {
@@ -1253,7 +1223,7 @@ async function initialize() {
     gameSettings = getDefaultGameSettings();
     await updatePFPs();
 
-    server.listen(process.env.PORT || 3001, () => {
+    server.listen(process.env.PORT || 3001, "0.0.0.0", () => {
         console.log("SERVER IS RUNNING");
     });
 }

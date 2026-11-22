@@ -10,7 +10,7 @@ import Leaderboard from './leaderboard';
 import RankSection from './rankSection';
 var socket = io({ autoConnect: false });
 const IS_PROD = process.env.NODE_ENV === "production";
-const URL = IS_PROD ? "http://www.ethananderson.ca/" : "http://localhost:3001";
+const URL = IS_PROD ? window.location.origin : "http://localhost:3001";
 
 var myGuess = "";
 var answer = "";
